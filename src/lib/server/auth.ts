@@ -28,6 +28,8 @@ type SessionRow = { address: string; expires_at: number };
 const memoryChallenges = new Map<string, Challenge>();
 const memorySessions = new Map<string, Session>();
 
+export const MAX_SIWE_NONCE_LENGTH = 128;
+
 async function hashToken(token: string) {
   const digest = await crypto.subtle.digest(
     'SHA-256',

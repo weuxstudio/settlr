@@ -6,14 +6,14 @@ import {
   serializeSignature
 } from 'viem';
 import { z } from 'zod';
-import { verifyChallenge } from '$lib/server/auth';
+import { MAX_SIWE_NONCE_LENGTH, verifyChallenge } from '$lib/server/auth';
 import { isSameOrigin, readJson } from '$lib/server/request';
 import { consumeRateLimit } from '$lib/server/rate-limit';
 
 const bodySchema = z.object({
   message: z.string().min(1).max(4096),
   signature: z.string().regex(/^0x(?:[a-fA-F0-9]{128}|[a-fA-F0-9]{130})$/),
-  nonce: z.string().min(8).max(64)
+  nonce: z.string().min(8).max(MAX_SIWE_NONCE_LENGTH)
 });
 
 export async function POST({ request, cookies, url, platform }) {
