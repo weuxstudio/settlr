@@ -52,6 +52,7 @@
   let isWalletMenuOpen = false;
   let walletAddress = '';
   let toast = '';
+  let walletHint = '';
   let isLoading = false;
   let newTitle = '';
   let newAmount = '';
@@ -184,18 +185,20 @@
       walletAddress = address;
       newRecipient = address;
       await loadRequests();
+      walletHint = '';
       showToast('Wallet connected to Arc.');
     } catch (error) {
       walletAddress = '';
-      showToast(
-        error instanceof Error ? error.message : 'Wallet connection failed.'
-      );
+      walletHint =
+        error instanceof Error ? error.message : 'Wallet connection failed.';
+      showToast(walletHint);
     }
   }
 
   function openCreateRequest() {
     if (!walletAddress) {
-      showToast('Connect a wallet before creating a request.');
+      walletHint = 'Connect a wallet before creating a request.';
+      showToast(walletHint);
       return;
     }
     newRecipient = walletAddress;
@@ -412,6 +415,16 @@
             >
           </div>
         </div>
+        {#if !walletAddress && walletHint}
+          <div
+            class="mt-4 flex items-center gap-3 rounded-lg border border-[#c9d7f6] bg-[#f2f6ff] px-4 py-3 text-sm text-[#33415b]"
+            role="status"
+            aria-live="polite"
+          >
+            <WalletCards size={17} class="shrink-0 text-[#2454d6]" />
+            <span>{walletHint}</span>
+          </div>
+        {/if}
       </section>
 
       <section
