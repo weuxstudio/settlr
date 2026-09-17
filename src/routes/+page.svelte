@@ -40,7 +40,8 @@
   import {
     connectWallet,
     signInWithEthereum,
-    switchToArc
+    switchToArc,
+    switchWalletAccount
   } from '$lib/client/wallet';
   import type { PaymentRequest, PaymentStatus } from '$lib/types';
 
@@ -225,6 +226,48 @@
     }
   }
 
+  async function handleSwitchAccount() {
+    if (isConnecting) return;
+    const previousAddress = walletAddress;
+    isWalletMenuOpen = false;
+    isConnecting = true;
+    walletHint = 'Select a different account in MetaMask.';
+    try {
+      const address = await switchWalletAccount();
+      if (address.toLowerCase() === previousAddress.toLowerCase()) {
+        throw new Error('Select a different wallet account to switch.');
+      }
+      await switchToArc();
+      await signInWithEthereum(address);
+      const sessionResponse = await fetch('/api/auth/session', {
+        cache: 'no-store'
+      });
+      const session = (await sessionResponse.json()) as {
+        authenticated?: boolean;
+        address?: string;
+        error?: string;
+      };
+      if (!sessionResponse.ok || !session.authenticated || !session.address) {
+        throw new Error(
+          session.error ?? 'The wallet session could not be opened.'
+        );
+      }
+      walletAddress = address;
+      newRecipient = address;
+      await loadRequests();
+      walletHint = '';
+      showToast('Wallet account switched.');
+    } catch (error) {
+      walletHint =
+        error instanceof Error
+          ? error.message
+          : 'Wallet account switch failed.';
+      showToast(walletHint);
+    } finally {
+      isConnecting = false;
+    }
+  }
+
   function openCreateRequest() {
     if (!walletAddress) {
       walletHint = 'Connect a wallet before creating a request.';
@@ -362,6 +405,13 @@
                   href={ARC_EXPLORER_URL}
                   target="_blank"
                   rel="noreferrer"><ExternalLink size={14} />View on explorer</a
+                >
+                <button
+                  class="btn btn-ghost btn-sm w-full justify-start gap-2 text-[#596579]"
+                  type="button"
+                  onclick={handleSwitchAccount}
+                  disabled={isConnecting}
+                  ><WalletCards size={14} />Switch account</button
                 >
                 <button
                   class="btn btn-ghost btn-sm w-full justify-start gap-2 text-[#b95757] hover:bg-[#fff4f4] hover:text-[#9b3f3f]"

@@ -12,7 +12,11 @@
   } from 'lucide-svelte';
   import { formatUsdcBaseUnits, parseUsdc } from '$lib/format';
   import { ARC_EXPLORER_URL, shortenAddress } from '$lib/config';
-  import { connectWallet, sendMemoPayment } from '$lib/client/wallet';
+  import {
+    connectWallet,
+    sendMemoPayment,
+    switchWalletAccount
+  } from '$lib/client/wallet';
 
   type PublicRequest = {
     token: string;
@@ -281,6 +285,20 @@
     }
   }
 
+  async function handleSwitchWallet() {
+    try {
+      wallet = await switchWalletAccount();
+      transactionHash = '';
+      verificationState = 'idle';
+      message = 'Wallet account switched. Review the payment before continuing.';
+    } catch (cause) {
+      message =
+        cause instanceof Error
+          ? cause.message
+          : 'Wallet account switch failed.';
+    }
+  }
+
   async function copyRecipient() {
     if (!request) return;
     await navigator.clipboard?.writeText(request.recipient);
@@ -467,8 +485,15 @@
                 size={17}
               />Request settled{:else if !request.paymentsEnabled}<Wallet
                 size={17}
-              />Payments unavailable{:else}<Wallet size={17} />Pay with wallet{/if}
+                />Payments unavailable{:else}<Wallet size={17} />Pay with wallet{/if}
           </button>
+          <button
+            class="btn btn-ghost mt-2 h-10 w-full rounded-lg text-xs text-[#596b87]"
+            type="button"
+            disabled={isSending || isClosed || !request.paymentsEnabled}
+            onclick={handleSwitchWallet}
+            >Switch wallet account</button
+          >
           {#if message}
             <div
               class="mt-4 rounded-lg border border-[#dce5f5] bg-[#f3f7ff] px-3 py-3 text-xs leading-5 text-[#536786]"

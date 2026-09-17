@@ -85,6 +85,23 @@ export async function connectWallet() {
   }
 }
 
+export async function switchWalletAccount() {
+  const provider = await resolveProvider();
+  if (!provider) throw missingProviderError();
+  try {
+    await provider.request({
+      method: 'wallet_requestPermissions',
+      params: [{ eth_accounts: {} }]
+    });
+  } catch (error) {
+    const code = (error as { code?: number })?.code;
+    if (code !== -32601 && code !== 4200) {
+      throw walletError(error, 'Wallet account switch was cancelled.');
+    }
+  }
+  return connectWallet();
+}
+
 export async function signInWithEthereum(address: string) {
   const provider = await resolveProvider();
   if (!provider) throw missingProviderError();
