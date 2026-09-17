@@ -639,10 +639,19 @@
                 <Search size={18} />
               </div>
               <h3 class="mt-4 text-sm font-semibold text-[#33415b]">
-                No requests found
+                {#if requests.length === 0 && walletAddress}
+                  No requests for this wallet
+                {:else}
+                  No requests found
+                {/if}
               </h3>
               <p class="mt-1 text-xs text-[#7f8a9d]">
-                Try another search or create a new payment request.
+                {#if requests.length === 0 && walletAddress}
+                  Requests are private to the connected wallet. Switch accounts
+                  to view another workspace.
+                {:else}
+                  Try another search or create a new payment request.
+                {/if}
               </p>
             </div>
           {:else}
