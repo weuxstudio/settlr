@@ -319,7 +319,7 @@
                 stroke-linejoin="round"
               /><circle cx="18.5" cy="6" r="1.5" fill="#8daeff" /></svg
             ></span
-          ><span class="text-[15px] font-semibold tracking-[-0.02em]"
+          ><span class="text-[15px] font-semibold tracking-[-0.005em]"
             >MemoMatch</span
           ></a
         >
@@ -421,7 +421,7 @@
         >
           <div>
             <h1
-              class="max-w-[680px] text-[clamp(2rem,4vw,3.25rem)] font-semibold leading-[1.04] tracking-[-0.055em] text-[#172238]"
+              class="max-w-[680px] text-[clamp(2rem,4vw,3.25rem)] font-semibold leading-[1.04] tracking-[-0.025em] text-[#172238]"
             >
               Tie every payment to its work.
             </h1>
@@ -456,7 +456,7 @@
           <div class="px-2 sm:px-4">
             <div class="text-xs text-[#7f8a9d]">Outstanding</div>
             <div
-              class="mono-numbers mt-2 text-[23px] font-semibold tracking-[-0.04em] text-[#172238]"
+              class="mono-numbers mt-2 text-[23px] font-semibold tracking-[-0.015em] text-[#172238]"
             >
               ${formatUsdcBaseUnits(totals.outstanding)}
             </div>
@@ -467,7 +467,7 @@
           <div class="px-4">
             <div class="text-xs text-[#7f8a9d]">Collected</div>
             <div
-              class="mono-numbers mt-2 text-[23px] font-semibold tracking-[-0.04em] text-[#172238]"
+              class="mono-numbers mt-2 text-[23px] font-semibold tracking-[-0.015em] text-[#172238]"
             >
               ${formatUsdcBaseUnits(totals.collected)}
             </div>
@@ -480,7 +480,7 @@
           <div class="px-4">
             <div class="text-xs text-[#7f8a9d]">Paid requests</div>
             <div
-              class="mono-numbers mt-2 text-[23px] font-semibold tracking-[-0.04em] text-[#172238]"
+              class="mono-numbers mt-2 text-[23px] font-semibold tracking-[-0.015em] text-[#172238]"
             >
               {totals.paid}<span
                 class="ml-1 text-base font-medium text-[#9aa4b5]"
@@ -492,7 +492,7 @@
           <div class="px-4">
             <div class="text-xs text-[#7f8a9d]">Avg. settlement</div>
             <div
-              class="mono-numbers mt-2 text-[23px] font-semibold tracking-[-0.04em] text-[#172238]"
+              class="mono-numbers mt-2 text-[23px] font-semibold tracking-[-0.015em] text-[#172238]"
             >
               {requests.length ? 'Calculating' : '—'}
             </div>
@@ -512,7 +512,7 @@
         >
           <div>
             <h2
-              class="text-[17px] font-semibold tracking-[-0.02em] text-[#172238]"
+              class="text-[17px] font-semibold tracking-[-0.005em] text-[#172238]"
             >
               Payment requests
             </h2>
@@ -648,7 +648,7 @@
           <div class="flex items-start justify-between">
             <div>
               <h2
-                class="text-[17px] font-semibold tracking-[-0.02em] text-[#172238]"
+                class="text-[17px] font-semibold tracking-[-0.005em] text-[#172238]"
               >
                 Settlement activity
               </h2>
@@ -714,7 +714,7 @@
               <Zap size={14} />Arc native flow
             </div>
             <h2
-              class="mt-5 max-w-[290px] text-[22px] font-semibold leading-[1.14] tracking-[-0.04em] text-[#172238]"
+              class="mt-5 max-w-[290px] text-[22px] font-semibold leading-[1.14] tracking-[-0.015em] text-[#172238]"
             >
               A payment trail your whole team can trust.
             </h2>
@@ -768,7 +768,7 @@
               Payment request
             </div>
             <h2
-              class="mt-2 text-xl font-semibold tracking-[-0.035em] text-[#172238]"
+              class="mt-2 text-xl font-semibold tracking-[-0.012em] text-[#172238]"
             >
               {selectedRequest.title}
             </h2>
@@ -782,7 +782,7 @@
         <div class="mt-6 rounded-xl bg-[#f7f9fc] p-4">
           <div class="text-xs text-[#7f8a9d]">Amount due</div>
           <div
-            class="mono-numbers mt-2 text-3xl font-semibold tracking-[-0.05em] text-[#172238]"
+            class="mono-numbers mt-2 text-3xl font-semibold tracking-[-0.02em] text-[#172238]"
           >
             ${formatUsdc(selectedRequest.amount)}
             <span class="text-base font-medium text-[#7f8a9d]">USDC</span>
@@ -894,7 +894,7 @@
               <FilePlus2 size={17} />
             </div>
             <h2
-              class="mt-4 text-xl font-semibold tracking-[-0.035em] text-[#172238]"
+              class="mt-4 text-xl font-semibold tracking-[-0.012em] text-[#172238]"
             >
               New payment request
             </h2>

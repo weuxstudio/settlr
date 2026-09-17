@@ -106,7 +106,7 @@
                   : 'Verified settlement record'}
               </div>
               <h1
-                class="mt-4 text-2xl font-semibold tracking-[-0.04em] text-[#172238]"
+                class="mt-4 text-2xl font-semibold tracking-[-0.015em] text-[#172238]"
               >
                 Settlement receipt
               </h1>
@@ -136,7 +136,7 @@
           <div class="px-6 py-5 sm:px-10">
             <div class="text-xs text-[#8994a6]">Total settled</div>
             <div
-              class="mono-numbers mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#172238]"
+              class="mono-numbers mt-2 text-2xl font-semibold tracking-[-0.015em] text-[#172238]"
             >
               ${formatUsdcBaseUnits(request.paidMicroUsdc)}
               <span class="text-sm font-medium text-[#8994a6]">USDC</span>

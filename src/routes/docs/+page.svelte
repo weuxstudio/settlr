@@ -57,7 +57,7 @@
         <Code2 size={15} />Developer docs
       </div>
       <h1
-        class="mt-5 text-[clamp(2.2rem,5vw,4rem)] font-semibold leading-[1.02] tracking-[-0.06em]"
+        class="mt-5 text-[clamp(2.2rem,5vw,4rem)] font-semibold leading-[1.02] tracking-[-0.025em]"
       >
         A payment reference that survives the handoff.
       </h1>
@@ -109,7 +109,7 @@
           Arc contract references
         </div>
         <h2
-          class="mt-5 text-[22px] font-semibold leading-[1.12] tracking-[-0.04em] text-[#172238]"
+          class="mt-5 text-[22px] font-semibold leading-[1.12] tracking-[-0.015em] text-[#172238]"
         >
           Use the network primitives.
         </h2>
@@ -175,7 +175,7 @@
             <FileCheck2 size={14} class="text-[#2454d6]" />Open source module
           </div>
           <h2
-            class="mt-3 text-[22px] font-semibold tracking-[-0.04em] text-[#172238]"
+            class="mt-3 text-[22px] font-semibold tracking-[-0.015em] text-[#172238]"
           >
             Bring the verification logic into another Arc app.
           </h2>

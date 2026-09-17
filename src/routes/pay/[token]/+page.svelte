@@ -328,7 +328,7 @@
             <ShieldCheck size={15} />Verified payment request
           </div>
           <h1
-            class="mt-7 text-[clamp(2rem,5vw,3.3rem)] font-semibold leading-[1.02] tracking-[-0.055em]"
+            class="mt-7 text-[clamp(2rem,5vw,3.3rem)] font-semibold leading-[1.02] tracking-[-0.025em]"
           >
             Send USDC to settle this request.
           </h1>
@@ -339,7 +339,7 @@
           <div class="mt-10 border-t border-[#edf0f5] pt-6">
             <div class="text-xs text-[#8994a6]">Amount due</div>
             <div
-              class="mono-numbers mt-2 text-4xl font-semibold tracking-[-0.06em] text-[#172238]"
+              class="mono-numbers mt-2 text-4xl font-semibold tracking-[-0.02em] text-[#172238]"
             >
               ${formatUsdcBaseUnits(remaining)}<span
                 class="ml-2 text-base font-medium tracking-normal text-[#8994a6]"
