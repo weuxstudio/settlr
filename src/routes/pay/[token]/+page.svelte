@@ -35,6 +35,7 @@
   let wallet = '';
   let transactionHash = '';
   let isSending = false;
+  let isRecipientOwner = false;
   let message = '';
   let verificationState:
     'idle' | 'pending' | 'delayed' | 'verified' | 'rejected' = 'idle';
@@ -96,6 +97,19 @@
       const loaded = payload.request as PublicRequest;
       request = loaded;
       amount = formatUsdcBaseUnits(BigInt(loaded.remainingMicroUsdc));
+      const sessionResponse = await fetch('/api/auth/session', {
+        cache: 'no-store'
+      });
+      if (sessionResponse.ok) {
+        const session = (await sessionResponse.json()) as {
+          authenticated?: boolean;
+          address?: string;
+        };
+        isRecipientOwner = Boolean(
+          session.authenticated &&
+          session.address?.toLowerCase() === loaded.recipient.toLowerCase()
+        );
+      }
       const pending = readPendingPayment(loaded.token, loaded.network);
       if (
         pending &&
@@ -295,9 +309,13 @@
         >
         MemoMatch
       </a>
-      <a href="/" class="btn btn-ghost btn-sm gap-2 rounded-lg text-[#596579]"
-        ><ArrowLeft size={15} />Back to overview</a
-      >
+      {#if isRecipientOwner}
+        <a
+          href="/#requests"
+          class="btn btn-ghost btn-sm gap-2 rounded-lg text-[#596579]"
+          ><ArrowLeft size={15} />Manage request</a
+        >
+      {/if}
     </div>
 
     {#if loading}
@@ -325,14 +343,14 @@
           <div
             class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-[#2454d6]"
           >
-            <ShieldCheck size={15} />Verified payment request
+            <ShieldCheck size={15} />Verified Arc payment reference
           </div>
           <h1
-            class="mt-7 text-[clamp(2rem,5vw,3.3rem)] font-semibold leading-[1.02] tracking-[-0.025em]"
+            class="mt-7 max-w-md text-[clamp(1.9rem,4vw,2.7rem)] font-semibold leading-[1.08] tracking-[-0.018em]"
           >
-            Send USDC to settle this request.
+            Pay this request with USDC.
           </h1>
-          <p class="mt-4 max-w-md text-sm leading-6 text-[#6f7e95]">
+          <p class="mt-4 max-w-md text-sm leading-6 text-[#596b87]">
             Your payment goes directly to the recipient on Arc. The reference
             and receipt stay visible after settlement.
           </p>
@@ -341,14 +359,14 @@
             <div
               class="mono-numbers mt-2 text-4xl font-semibold tracking-[-0.02em] text-[#172238]"
             >
-              ${formatUsdcBaseUnits(remaining)}<span
+              {formatUsdcBaseUnits(remaining)}<span
                 class="ml-2 text-base font-medium tracking-normal text-[#8994a6]"
                 >USDC</span
               >
             </div>
-            <div class="mt-3 flex items-center gap-2 text-xs text-[#2b8c67]">
+            <div class="mt-3 flex items-center gap-2 text-xs text-[#257b5d]">
               <span class="h-1.5 w-1.5 rounded-full bg-current"></span>Arc {request.network}
-              · final in a committed block
+              · final after block confirmation
             </div>
           </div>
         </section>
@@ -375,34 +393,60 @@
                   class="min-w-0 flex-1 truncate font-mono text-xs text-[#596579]"
                   >{shortenAddress(request.recipient, 10, 8)}</span
                 ><button
-                  class="btn btn-ghost btn-xs rounded-md text-[#2454d6]"
+                  class="btn btn-ghost h-11 min-h-11 w-11 rounded-md text-[#2454d6]"
                   aria-label="Copy recipient"
                   onclick={copyRecipient}><Clipboard size={14} /></button
                 >
               </div>
             </div>
-            <label class="block">
-              <span class="text-xs text-[#8994a6]">Payment amount</span>
+            <div>
+              <div class="flex items-center justify-between gap-3">
+                <label
+                  for="payment-amount"
+                  class="text-xs font-medium text-[#596b87]"
+                  >Amount to pay</label
+                >
+                <button
+                  type="button"
+                  class="text-[11px] font-semibold text-[#2454d6] hover:underline"
+                  disabled={isClosed}
+                  onclick={() => (amount = formatUsdcBaseUnits(remaining))}
+                  >Use full amount</button
+                >
+              </div>
               <div class="relative mt-2">
                 <input
+                  id="payment-amount"
                   bind:value={amount}
-                  class="input mono-numbers h-12 w-full rounded-lg border-[#dfe5ee] bg-white pr-16 text-base shadow-none"
+                  class="input mono-numbers h-12 w-full rounded-lg border-[#cbd5e1] bg-[#f8fafc] pr-16 text-base text-[#172238] shadow-none focus:border-[#2454d6] focus:bg-white"
                   inputmode="decimal"
+                  aria-describedby="payment-amount-help"
                   disabled={isClosed}
                 /><span
                   class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-semibold text-[#8994a6]"
                   >USDC</span
                 >
               </div>
-              <span class="mt-2 block text-[11px] text-[#9aa4b5]"
+              <span
+                id="payment-amount-help"
+                class="mt-2 block text-[11px] text-[#6f7e95]"
                 >You can pay in parts. Maximum for this request: {formatUsdcBaseUnits(
                   remaining
                 )} USDC</span
               >
-            </label>
+            </div>
           </div>
+          {#if !request.paymentsEnabled}
+            <div
+              class="mt-6 rounded-lg border border-[#ecd9ad] bg-[#fff9eb] px-3.5 py-3 text-xs leading-5 text-[#7a5a13]"
+              role="status"
+            >
+              Payments are disabled in this environment. This request can be
+              reviewed, but no wallet transaction can be submitted.
+            </div>
+          {/if}
           <button
-            class="btn btn-primary mt-7 h-12 w-full rounded-lg shadow-[0_9px_24px_rgba(36,84,214,0.18)]"
+            class="btn btn-primary mt-6 h-12 w-full rounded-lg shadow-[0_9px_24px_rgba(36,84,214,0.18)]"
             disabled={isClosed ||
               isSending ||
               verificationState === 'pending' ||
@@ -416,7 +460,9 @@
                 class="animate-spin"
               />Checking wallet…{:else if isClosed}<CheckCircle2
                 size={17}
-              />Request settled{:else}<Wallet size={17} />Pay with wallet{/if}
+              />Request settled{:else if !request.paymentsEnabled}<Wallet
+                size={17}
+              />Payments unavailable{:else}<Wallet size={17} />Pay with wallet{/if}
           </button>
           {#if message}
             <div
@@ -434,7 +480,7 @@
             </div>
           {/if}
           <div
-            class="mt-6 flex items-start gap-2 text-[11px] leading-5 text-[#8994a6]"
+            class="mt-6 flex items-start gap-2 text-[11px] leading-5 text-[#6f7e95]"
           >
             <ShieldCheck size={15} class="mt-0.5 shrink-0 text-[#2b8c67]" />No
             funds are held by MemoMatch. Your wallet sends USDC directly to the
@@ -444,7 +490,7 @@
       </div>
     {/if}
 
-    <div class="mt-7 text-center text-[11px] text-[#9aa4b5]">
+    <div class="mt-7 text-center text-[11px] text-[#6f7e95]">
       Powered by MemoMatch · Arc {request?.network ?? 'testnet'} ·
       <a
         href="/docs"
