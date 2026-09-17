@@ -27,7 +27,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   const devConnections = import.meta.env.DEV ? ' ws://127.0.0.1:5173' : '';
   response.headers.set(
     'content-security-policy',
-    `default-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'; img-src 'self' data:; connect-src 'self'${devConnections} https://rpc.mainnet.arc.io https://rpc.testnet.arc.io https://explorer.arc.io https://explorer.testnet.arc.io; script-src ${scriptSources}; style-src 'self' 'unsafe-inline'; font-src 'self' data:`
+    `default-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'; img-src 'self' data:; connect-src 'self'${devConnections} https://rpc.mainnet.arc.io https://rpc.testnet.arc.io https://explorer.arc.io https://explorer.testnet.arc.io; script-src ${scriptSources}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com`
   );
   return response;
 };
