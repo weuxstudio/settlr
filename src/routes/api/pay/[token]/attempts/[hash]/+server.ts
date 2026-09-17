@@ -40,7 +40,9 @@ export async function GET({ params, platform }) {
       transactionHash: hash,
       message:
         attempt.state === 'rejected'
-          ? 'The transaction could not be matched to this request.'
+          ? attempt.reason === 'Self payment is not supported'
+            ? 'The payer wallet matches the recipient. Use a different wallet to pay this request.'
+            : 'The transaction could not be matched to this request.'
           : undefined
     },
     { status: statusCode, headers: { 'cache-control': 'no-store' } }

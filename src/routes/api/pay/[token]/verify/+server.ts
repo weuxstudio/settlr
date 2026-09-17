@@ -111,7 +111,9 @@ export async function POST({ params, request, platform, url }) {
           status: 'rejected',
           transactionHash: parsed.data.transactionHash,
           message:
-            'The transaction could not be matched to this payment request.'
+            previousAttempt.reason === 'Self payment is not supported'
+              ? 'The payer wallet matches the recipient. Use a different wallet to pay this request.'
+              : 'The transaction could not be matched to this payment request.'
         },
         { status: 422 }
       );
@@ -207,6 +209,10 @@ export async function POST({ params, request, platform, url }) {
     }
   );
   if (!result.ok) {
+    const publicMessage =
+      result.reason === 'Self payment is not supported'
+        ? 'The payer wallet matches the recipient. Use a different wallet to pay this request.'
+        : 'The transaction could not be matched to this payment request.';
     await saveAttempt(
       platform?.env.DB,
       item.id,
@@ -219,7 +225,7 @@ export async function POST({ params, request, platform, url }) {
       {
         status: 'rejected',
         transactionHash: parsed.data.transactionHash,
-        message: 'The transaction could not be matched to this payment request.'
+        message: publicMessage
       },
       { status: 422 }
     );

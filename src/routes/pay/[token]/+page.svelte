@@ -224,7 +224,12 @@
         token: request.token,
         network: request.network
       });
-      message = 'The transaction could not be matched to this payment request.';
+      const rejection = (await verifyResponse.json().catch(() => ({}))) as {
+        message?: string;
+      };
+      message =
+        rejection.message ??
+        'The transaction could not be matched to this payment request.';
     } catch {
       verificationState = 'delayed';
       message =

@@ -169,6 +169,11 @@ export async function sendMemoPayment(
   })) as string[];
   const sender = accounts[0];
   if (!sender) throw new Error('Connect a wallet before paying.');
+  if (sender.toLowerCase() === recipient.toLowerCase()) {
+    throw new Error(
+      'Use a different wallet to pay this request. The recipient wallet cannot pay itself.'
+    );
+  }
   const code = (await provider.request({
     method: 'eth_getCode',
     params: [sender, 'latest']
