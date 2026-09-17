@@ -1,5 +1,10 @@
 import { json } from '@sveltejs/kit';
 import { dev } from '$app/environment';
+import {
+  compactSignatureToSignature,
+  parseCompactSignature,
+  serializeSignature
+} from 'viem';
 import { z } from 'zod';
 import { verifyChallenge } from '$lib/server/auth';
 import { isSameOrigin, readJson } from '$lib/server/request';
@@ -7,7 +12,7 @@ import { consumeRateLimit } from '$lib/server/rate-limit';
 
 const bodySchema = z.object({
   message: z.string().min(1).max(4096),
-  signature: z.string().regex(/^0x[a-fA-F0-9]{130}$/),
+  signature: z.string().regex(/^0x(?:[a-fA-F0-9]{128}|[a-fA-F0-9]{130})$/),
   nonce: z.string().min(8).max(64)
 });
 
@@ -40,12 +45,20 @@ export async function POST({ request, cookies, url, platform }) {
       { error: 'The signed message is incomplete.' },
       { status: 400 }
     );
+  const normalizedSignature =
+    parsed.data.signature.length === 130
+      ? serializeSignature(
+          compactSignatureToSignature(
+            parseCompactSignature(parsed.data.signature as `0x${string}`)
+          )
+        )
+      : parsed.data.signature;
   let session;
   try {
     session = await verifyChallenge(
       platform?.env.DB,
       parsed.data.message,
-      parsed.data.signature as `0x${string}`,
+      normalizedSignature as `0x${string}`,
       parsed.data.nonce,
       url.origin
     );
