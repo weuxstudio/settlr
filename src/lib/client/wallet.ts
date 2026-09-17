@@ -13,6 +13,11 @@ type Eip1193Provider = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
 };
 
+type Eip6963Announcement = {
+  info?: { name?: string };
+  provider?: Eip1193Provider;
+};
+
 declare global {
   interface Window {
     ethereum?: Eip1193Provider;
@@ -23,24 +28,66 @@ export function getProvider() {
   return browser ? window.ethereum : undefined;
 }
 
-export async function connectWallet() {
-  const provider = getProvider();
-  if (!provider)
-    throw new Error(
-      'No browser wallet found. Install MetaMask or Rabby to continue.'
+async function resolveProvider() {
+  const injected = getProvider();
+  if (injected) return injected;
+  if (!browser) return undefined;
+
+  return new Promise<Eip1193Provider | undefined>((resolve) => {
+    let settled = false;
+    const finish = (provider?: Eip1193Provider) => {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener(
+        'eip6963:announceProvider',
+        handleAnnouncement
+      );
+      resolve(provider);
+    };
+    const handleAnnouncement = (event: Event) => {
+      const announcement = (event as CustomEvent<Eip6963Announcement>).detail;
+      finish(announcement?.provider);
+    };
+    window.addEventListener('eip6963:announceProvider', handleAnnouncement);
+    window.dispatchEvent(new Event('eip6963:requestProvider'));
+    window.setTimeout(() => finish(), 350);
+  });
+}
+
+function walletError(error: unknown, fallback: string) {
+  const code = (error as { code?: number })?.code;
+  if (code === 4001) return new Error('Wallet request was rejected.');
+  if (code === -32002)
+    return new Error(
+      'A wallet request is already open. Check the wallet extension.'
     );
-  const accounts = (await provider.request({
-    method: 'eth_requestAccounts'
-  })) as string[];
-  return accounts[0];
+  if (error instanceof Error && error.message) return error;
+  return new Error(fallback);
+}
+
+function missingProviderError() {
+  return new Error(
+    'No wallet found. Open MemoMatch in MetaMask or Rabby, or install a wallet extension.'
+  );
+}
+
+export async function connectWallet() {
+  const provider = await resolveProvider();
+  if (!provider) throw missingProviderError();
+  try {
+    const accounts = (await provider.request({
+      method: 'eth_requestAccounts'
+    })) as string[];
+    if (!accounts[0]) throw new Error('The wallet did not return an account.');
+    return accounts[0];
+  } catch (error) {
+    throw walletError(error, 'Wallet connection failed.');
+  }
 }
 
 export async function signInWithEthereum(address: string) {
-  const provider = getProvider();
-  if (!provider)
-    throw new Error(
-      'No browser wallet found. Install MetaMask or Rabby to continue.'
-    );
+  const provider = await resolveProvider();
+  if (!provider) throw missingProviderError();
 
   const challengeResponse = await fetch('/api/auth/challenge', {
     method: 'POST',
@@ -56,10 +103,15 @@ export async function signInWithEthereum(address: string) {
     throw new Error(challenge.error ?? 'Could not prepare the wallet sign in.');
   }
 
-  const signature = (await provider.request({
-    method: 'personal_sign',
-    params: [challenge.message, address]
-  })) as string;
+  let signature: string;
+  try {
+    signature = (await provider.request({
+      method: 'personal_sign',
+      params: [challenge.message, address]
+    })) as string;
+  } catch (error) {
+    throw walletError(error, 'Wallet sign in was declined.');
+  }
   const verifyResponse = await fetch('/api/auth/verify', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -79,8 +131,8 @@ export async function signInWithEthereum(address: string) {
 }
 
 export async function switchToArc() {
-  const provider = getProvider();
-  if (!provider) throw new Error('No browser wallet found.');
+  const provider = await resolveProvider();
+  if (!provider) throw missingProviderError();
   try {
     await provider.request({
       method: 'wallet_switchEthereumChain',
@@ -109,8 +161,8 @@ export async function sendMemoPayment(
   amount: bigint,
   memoId: `0x${string}`
 ) {
-  const provider = getProvider();
-  if (!provider) throw new Error('No browser wallet found.');
+  const provider = await resolveProvider();
+  if (!provider) throw missingProviderError();
   await switchToArc();
   const accounts = (await provider.request({
     method: 'eth_accounts'

@@ -969,7 +969,12 @@
     </div>
   {/if}
 
-  {#if toast}<div class="toast toast-end toast-bottom z-[60] p-4">
+  {#if toast}
+    <div
+      class="toast toast-end toast-bottom z-[60] p-4"
+      role="status"
+      aria-live="polite"
+    >
       <div
         class="alert border border-[#c9d7f6] bg-[#172238] text-white shadow-[0_14px_40px_rgba(23,34,56,0.2)]"
       >
@@ -977,7 +982,8 @@
           >{toast}</span
         >
       </div>
-    </div>{/if}
+    </div>
+  {/if}
 </div>
 
 <style>
