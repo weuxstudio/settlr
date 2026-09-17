@@ -1,0 +1,51 @@
+{
+  "name": "memomatch",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "npm@10.9.8",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "prettier --check .",
+    "format": "prettier --write .",
+    "db:migrate": "wrangler d1 migrations apply memomatch",
+    "deploy": "npm run build && wrangler deploy",
+    "deploy:indexer": "wrangler deploy --config wrangler.indexer.jsonc"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260917.1",
+    "@sveltejs/adapter-cloudflare": "^7.2.9",
+    "@sveltejs/kit": "^2.48.0",
+    "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "@tailwindcss/vite": "^4.1.13",
+    "@types/node": "^22.18.0",
+    "prettier": "^3.6.2",
+    "prettier-plugin-svelte": "^3.4.0",
+    "svelte": "^5.38.7",
+    "svelte-check": "^4.3.1",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5",
+    "vitest": "^5.0.1",
+    "wrangler": "^4.36.0"
+  },
+  "overrides": {
+    "cookie": "^0.7.2"
+  },
+  "dependencies": {
+    "animejs": "^4.2.2",
+    "daisyui": "^5.1.7",
+    "drizzle-orm": "^0.45.2",
+    "lucide-svelte": "^0.544.0",
+    "viem": "^2.37.9",
+    "zod": "^4.1.5"
+  }
+}

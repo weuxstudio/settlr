@@ -1,0 +1,70 @@
+import { describe, expect, it } from 'vitest';
+import { publicPayment } from '$lib/server/public';
+import { readJson } from '$lib/server/request';
+import { formatUsdcBaseUnits, parseUsdcInput } from '$lib/format';
+import type { PaymentRequest } from '$lib/types';
+
+describe('security regression cases', () => {
+  it('keeps private request fields out of public payment responses', () => {
+    const request: PaymentRequest = {
+      id: crypto.randomUUID(),
+      token: `0x${'11'.repeat(32)}`,
+      memoId: `0x${'22'.repeat(32)}`,
+      owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      title: 'Private client work',
+      amount: '1,000.00',
+      amountMicroUsdc: '1000000000',
+      paid: '4.00',
+      paidMicroUsdc: '4000000',
+      remainingMicroUsdc: '996000000',
+      overpaidMicroUsdc: '0',
+      recipient: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      createdAt: new Date().toISOString(),
+      payments: [
+        {
+          id: crypto.randomUUID(),
+          amount: '4.00',
+          amountMicroUsdc: '4000000',
+          payer: '0xcccccccccccccccccccccccccccccccccccccc',
+          transactionHash: `0x${'33'.repeat(32)}`,
+          blockNumber: 10,
+          receivedAt: new Date().toISOString(),
+          explorerUrl: 'https://explorer.arc.io/tx/0x1',
+          verification: 'verified'
+        }
+      ]
+    };
+
+    const response = publicPayment(request);
+    expect(response).not.toHaveProperty('id');
+    expect(response).not.toHaveProperty('owner');
+    expect(response).not.toHaveProperty('title');
+    expect(response.amountMicroUsdc).toBe('1000000000');
+    expect(response.status).toBe('Partially paid');
+    expect(response.payments[0]).not.toHaveProperty('id');
+  });
+
+  it('rejects zero and malformed USDC input before conversion', () => {
+    expect(() => parseUsdcInput('0')).toThrow();
+    expect(() => parseUsdcInput('-1')).toThrow();
+    expect(() => parseUsdcInput('1.0000001')).toThrow();
+    expect(parseUsdcInput('1000.000001')).toBe(1_000_000_001n);
+    expect(formatUsdcBaseUnits(1_000_000_001n)).toBe('1,000.000001');
+  });
+
+  it('rejects oversized request bodies without hiding the size error', async () => {
+    const request = new Request('https://memomatch.test/api/requests', {
+      method: 'POST',
+      body: 'x'.repeat(16 * 1024 + 1)
+    });
+    await expect(readJson(request)).rejects.toMatchObject({ status: 413 });
+  });
+
+  it('returns null for invalid JSON so the endpoint can issue a controlled 400', async () => {
+    const request = new Request('https://memomatch.test/api/requests', {
+      method: 'POST',
+      body: '{'
+    });
+    await expect(readJson(request)).resolves.toBeNull();
+  });
+});
