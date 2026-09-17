@@ -15,6 +15,7 @@
     Filter,
     LayoutDashboard,
     Link2,
+    LogOut,
     Menu,
     MoreHorizontal,
     Plus,
@@ -176,6 +177,16 @@
   function showToast(message: string) {
     toast = message;
     setTimeout(() => (toast = ''), 3600);
+  }
+
+  async function handleDisconnect() {
+    isWalletMenuOpen = false;
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
+    walletAddress = '';
+    newRecipient = '';
+    requests = [];
+    selectedRequest = null;
+    showToast('Wallet disconnected.');
   }
 
   async function handleConnect() {
@@ -351,6 +362,12 @@
                   href={ARC_EXPLORER_URL}
                   target="_blank"
                   rel="noreferrer"><ExternalLink size={14} />View on explorer</a
+                >
+                <button
+                  class="btn btn-ghost btn-sm w-full justify-start gap-2 text-[#b95757] hover:bg-[#fff4f4] hover:text-[#9b3f3f]"
+                  type="button"
+                  onclick={handleDisconnect}
+                  ><LogOut size={14} />Disconnect wallet</button
                 >
               </div>{/if}
           </div>
