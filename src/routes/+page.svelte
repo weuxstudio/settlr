@@ -54,6 +54,7 @@
   let toast = '';
   let walletHint = '';
   let isLoading = false;
+  let isConnecting = false;
   let newTitle = '';
   let newAmount = '';
   let newRecipient = '';
@@ -178,10 +179,26 @@
   }
 
   async function handleConnect() {
+    if (isConnecting) return;
+    isConnecting = true;
+    walletHint = 'Approve the wallet request and sign the MemoMatch message.';
     try {
       const address = await connectWallet();
       await switchToArc();
       await signInWithEthereum(address);
+      const sessionResponse = await fetch('/api/auth/session', {
+        cache: 'no-store'
+      });
+      const session = (await sessionResponse.json()) as {
+        authenticated?: boolean;
+        address?: string;
+        error?: string;
+      };
+      if (!sessionResponse.ok || !session.authenticated || !session.address) {
+        throw new Error(
+          session.error ?? 'The wallet session could not be opened.'
+        );
+      }
       walletAddress = address;
       newRecipient = address;
       await loadRequests();
@@ -192,6 +209,8 @@
       walletHint =
         error instanceof Error ? error.message : 'Wallet connection failed.';
       showToast(walletHint);
+    } finally {
+      isConnecting = false;
     }
   }
 
@@ -337,7 +356,10 @@
           </div>
         {:else}<button
             class="btn btn-primary btn-sm h-10 rounded-lg px-4 shadow-[0_8px_18px_rgba(36,84,214,0.18)]"
-            onclick={handleConnect}>Connect wallet</button
+            disabled={isConnecting}
+            onclick={handleConnect}
+            >{#if isConnecting}<span class="loading loading-spinner loading-xs"
+              ></span>Connecting…{:else}Connect wallet{/if}</button
           >{/if}
       </div>
     </div>
