@@ -3,7 +3,7 @@ import { ARC_ENVIRONMENT } from '$lib/config';
 
 export const handle: Handle = async ({ event, resolve }) => {
   const runtimeNetwork = event.platform?.env.ARC_NETWORK;
-  if (runtimeNetwork && runtimeNetwork !== ARC_ENVIRONMENT) {
+  if (!import.meta.env.DEV && runtimeNetwork && runtimeNetwork !== ARC_ENVIRONMENT) {
     return new Response('Arc network configuration mismatch.', {
       status: 500,
       headers: { 'cache-control': 'no-store' }
