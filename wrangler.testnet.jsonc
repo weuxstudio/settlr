@@ -7,7 +7,7 @@
   "vars": {
     "ARC_NETWORK": "testnet",
     "ARC_RPC_URL": "https://rpc.testnet.arc.io",
-    "PAYMENTS_ENABLED": "false"
+    "PAYMENTS_ENABLED": "true"
   },
   "assets": {
     "binding": "ASSETS",

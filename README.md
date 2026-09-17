@@ -42,14 +42,14 @@ The default local configuration uses Arc Testnet. Arc Mainnet uses chain ID `504
 
 Runtime configuration belongs in Cloudflare Worker bindings or secrets. Private wallet keys are never required by MemoMatch. The browser wallet signs and sends the memo transaction, while the server verifies the final receipt.
 
-`PAYMENTS_ENABLED=false` keeps payment verification disabled until the corresponding Arc environment has passed its wallet and receipt acceptance test. The indexer also requires an explicit `ARC_START_BLOCK`; placeholder values intentionally fail the scheduled run instead of skipping historical blocks.
+The testnet configuration enables payment verification for wallet and receipt acceptance testing. Mainnet remains disabled with `PAYMENTS_ENABLED=false` until the corresponding production acceptance test is complete. The indexer also requires an explicit `ARC_START_BLOCK`; placeholder values intentionally fail the scheduled run instead of skipping historical blocks.
 
 ## D1 and Worker deployment
 
 1. Create separate D1 databases for the web Worker and the indexer environments, then put their IDs into the corresponding Wrangler files. Use `wrangler.testnet.jsonc` for the isolated testnet web Worker and `wrangler.jsonc` for production.
 2. Apply the versioned migrations with `npx wrangler d1 migrations apply memomatch --remote`.
 3. Set the explicit network, RPC and start-block configuration for the selected environment.
-4. Enable `PAYMENTS_ENABLED` only after the testnet walkthrough has verified a real receipt.
+4. Keep Mainnet disabled until the testnet walkthrough has verified a real receipt, then enable `PAYMENTS_ENABLED` only for the controlled production rollout.
 5. Build with the matching network, for example `PUBLIC_ARC_NETWORK=testnet npm run build` or `PUBLIC_ARC_NETWORK=mainnet npm run build`, then deploy with the matching Wrangler file.
 
 The scheduled Worker runs once per minute. It advances the sync cursor only after a block range has been read successfully. The unique transaction and log index constraint prevents duplicate payment records when an immediate verification and a scheduled run see the same transfer.
