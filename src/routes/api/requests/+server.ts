@@ -9,6 +9,14 @@ import { isSameOrigin, readJson, randomHex } from '$lib/server/request';
 
 const requestSchema = z.object({
   title: z.string().trim().min(1).max(80),
+  publicDescription: z.string().trim().min(1).max(160),
+  requesterName: z.string().trim().min(2).max(60),
+  publicReference: z.string().trim().max(80).optional().default(''),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional()
+    .or(z.literal('')),
   amount: z.string().regex(/^\d{1,30}(\.\d{1,6})?$/),
   recipient: z.string().regex(/^0x[a-fA-F0-9]{40}$/)
 });
@@ -101,7 +109,8 @@ export async function POST({ request, cookies, platform, url }) {
   if (!parsed.success)
     return json(
       {
-        error: 'Use a title, a positive USDC amount, and a valid Arc address.'
+        error:
+          'Use a requester name, private label, public payment purpose, positive USDC amount, and valid Arc address.'
       },
       { status: 400 }
     );
@@ -128,6 +137,10 @@ export async function POST({ request, cookies, platform, url }) {
     memoId: makeMemoId(),
     owner: session.address,
     title: parsed.data.title,
+    publicDescription: parsed.data.publicDescription,
+    requesterName: parsed.data.requesterName,
+    publicReference: parsed.data.publicReference,
+    dueDate: parsed.data.dueDate || undefined,
     amount: parsed.data.amount,
     amountMicroUsdc: amountMicroUsdc.toString(),
     paidMicroUsdc: '0',

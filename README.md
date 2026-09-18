@@ -19,6 +19,16 @@ The application includes:
 
 Production fails closed when D1 is unavailable. Local development may use an empty in-memory store, but it is never seeded with payment requests and it cannot enable payments by default.
 
+## Public entry and workspace
+
+- `/` explains the product with illustrative sample data. It does not request wallet access or load private account data.
+- `/app` checks the server session before showing the workspace. Signed-out visitors see a dedicated wallet sign-in screen.
+- `/app?intent=create` opens the request form once after authentication, then removes the intent from the URL.
+- Legacy `/#overview`, `/#requests` and `/#activity` links forward to the corresponding workspace anchor.
+- `/docs`, `/pay/[token]` and `/receipt/[token]` retain their existing routes. Workspace actions point to `/app` and brand links point to `/`.
+
+The entry screens use short Anime.js transitions and respect reduced-motion preferences. Sign-in reports connection, network switching, message signing and session verification separately. No transaction is sent during sign-in.
+
 ## Local development
 
 ```bash

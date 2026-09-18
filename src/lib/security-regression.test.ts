@@ -20,6 +20,10 @@ describe('security regression cases', () => {
       memoId: `0x${'22'.repeat(32)}`,
       owner: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       title: 'Private client work',
+      publicDescription: 'Website audit, September 2026',
+      requesterName: 'Northstar Studio',
+      publicReference: 'INV-2026-001',
+      dueDate: '2026-09-30',
       amount: '1,000.00',
       amountMicroUsdc: '1000000000',
       paid: '4.00',
@@ -47,6 +51,10 @@ describe('security regression cases', () => {
     expect(response).not.toHaveProperty('id');
     expect(response).not.toHaveProperty('owner');
     expect(response).not.toHaveProperty('title');
+    expect(response.publicDescription).toBe('Website audit, September 2026');
+    expect(response.requesterName).toBe('Northstar Studio');
+    expect(response.publicReference).toBe('INV-2026-001');
+    expect(response.dueDate).toBe('2026-09-30');
     expect(response.amountMicroUsdc).toBe('1000000000');
     expect(response.status).toBe('Partially paid');
     expect(response.payments[0]).not.toHaveProperty('id');

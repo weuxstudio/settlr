@@ -74,3 +74,41 @@ textarea:focus-visible {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Shared primary action for the public entry and authenticated workspace. */
+.action-primary,
+.workspace .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 12px 19px;
+  border: 1px solid #2454d6;
+  border-radius: 8px;
+  background: #2454d6;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 5px 13px #2454d61a;
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+.action-primary:hover,
+.workspace .btn-primary:hover {
+  background: #1c43ae;
+  border-color: #1c43ae;
+  box-shadow: 0 7px 18px #2454d626;
+}
+.action-primary:disabled,
+.workspace .btn-primary:disabled {
+  cursor: wait;
+  background: #e5ebf7;
+  border-color: #d4dced;
+  color: #435579;
+  box-shadow: none;
+}

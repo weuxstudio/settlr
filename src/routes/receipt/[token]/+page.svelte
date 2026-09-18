@@ -68,9 +68,9 @@
           onclick={() => window.print()}
           ><Printer size={15} />Print receipt</button
         ><a
-          href="/"
+          href="/app"
           class="btn btn-ghost btn-sm gap-2 rounded-lg text-[#596579]"
-          ><ArrowLeft size={15} />Overview</a
+          ><ArrowLeft size={15} />Open app</a
         >
       </div>
     </div>
@@ -121,22 +121,26 @@
             </div>
           </div>
         </div>
-        <div class="grid gap-0 border-b border-[#e4e9f1] sm:grid-cols-2">
+        <div
+          class="grid min-w-0 gap-0 border-b border-[#e4e9f1] sm:grid-cols-[minmax(0,1fr)_minmax(220px,1fr)]"
+        >
           <div
-            class="border-b border-[#edf0f5] px-6 py-5 sm:border-b-0 sm:border-r sm:px-10"
+            class="min-w-0 border-b border-[#edf0f5] px-6 py-5 sm:border-b-0 sm:border-r sm:px-10"
           >
             <div class="text-xs text-[#8994a6]">Payment reference</div>
-            <div class="mt-2 font-mono text-xs text-[#33415b]">
+            <div
+              class="mt-2 max-w-full break-all font-mono text-xs leading-5 text-[#33415b]"
+            >
               {request.token}
             </div>
             <div class="mt-1 text-[11px] text-[#9aa4b5]">
               Public reference only
             </div>
           </div>
-          <div class="px-6 py-5 sm:px-10">
+          <div class="min-w-0 px-6 py-5 sm:px-10">
             <div class="text-xs text-[#8994a6]">Total settled</div>
             <div
-              class="mono-numbers mt-2 text-2xl font-semibold tracking-[-0.015em] text-[#172238]"
+              class="mono-numbers mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-2xl font-semibold tracking-[-0.015em] text-[#172238]"
             >
               ${formatUsdcBaseUnits(request.paidMicroUsdc)}
               <span class="text-sm font-medium text-[#8994a6]">USDC</span>

@@ -1,1135 +1,806 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { animate, createScope } from 'animejs';
+  import { goto } from '$app/navigation';
+  import { animate } from 'animejs';
   import {
-    Activity,
+    ArrowRight,
     ArrowUpRight,
     Check,
     CheckCircle2,
-    ChevronDown,
-    Copy,
-    ExternalLink,
-    Download,
-    FileCheck2,
     FilePlus2,
-    Filter,
-    LayoutDashboard,
     Link2,
-    LogOut,
-    Menu,
-    MoreHorizontal,
-    Plus,
-    Search,
     ShieldCheck,
-    WalletCards,
-    X,
-    Zap
+    Fingerprint,
+    ReceiptText
   } from 'lucide-svelte';
-  import {
-    formatDate,
-    formatRelative,
-    formatUsdc,
-    formatUsdcBaseUnits,
-    parseUsdc
-  } from '$lib/format';
-  import {
-    ARC_ENVIRONMENT,
-    ARC_EXPLORER_URL,
-    shortenAddress
-  } from '$lib/config';
-  import {
-    connectWallet,
-    signInWithEthereum,
-    switchToArc,
-    switchWalletAccount
-  } from '$lib/client/wallet';
-  import type { PaymentRequest, PaymentStatus } from '$lib/types';
-
-  let requests: PaymentRequest[] = [];
-  let selectedRequest: PaymentRequest | null = null;
-  let query = '';
-  let statusFilter: 'All' | PaymentStatus = 'All';
-  let isCreateOpen = false;
-  let isMobileNavOpen = false;
-  let isWalletMenuOpen = false;
-  let walletAddress = '';
-  let toast = '';
-  let walletHint = '';
-  let isLoading = false;
-  let isConnecting = false;
-  let newTitle = '';
-  let newAmount = '';
-  let newRecipient = '';
-  let scopeRoot: HTMLDivElement;
-
-  async function loadRequests() {
-    const response = await fetch('/api/requests', { cache: 'no-store' });
-    if (!response.ok) {
-      requests = [];
-      return;
-    }
-    requests = (await response.json()).requests as PaymentRequest[];
-  }
-
-  function amountBase(request: PaymentRequest) {
-    return BigInt(request.amountMicroUsdc ?? parseUsdc(request.amount));
-  }
-  function paidBase(request: PaymentRequest) {
-    return BigInt(request.paidMicroUsdc ?? parseUsdc(request.paid));
-  }
-
-  $: filteredRequests = requests.filter((request) => {
-    const matchesQuery =
-      request.title.toLowerCase().includes(query.toLowerCase()) ||
-      request.token.toLowerCase().includes(query.toLowerCase());
-    const status = getStatus(request);
-    return matchesQuery && (statusFilter === 'All' || status === statusFilter);
-  });
-
-  $: totals = {
-    outstanding: requests.reduce((sum, request) => {
-      const remaining = amountBase(request) - paidBase(request);
-      return sum + (remaining > 0n ? remaining : 0n);
-    }, 0n),
-    collected: requests.reduce((sum, request) => sum + paidBase(request), 0n),
-    paid: requests.filter((request) => getStatus(request) === 'Paid').length
-  };
-
+  import Brand from '$lib/components/Brand.svelte';
+  import Disclosure from '$lib/components/Disclosure.svelte';
+  import { ARC_ENVIRONMENT } from '$lib/config';
+  import { legacyWorkspaceTarget } from '$lib/client/workspace';
+  let root: HTMLDivElement;
   onMount(() => {
-    void fetch('/api/auth/session', { cache: 'no-store' }).then(
-      async (response) => {
-        const session = (await response.json()) as {
-          authenticated?: boolean;
-          address?: string;
-        };
-        if (session.authenticated && session.address) {
-          walletAddress = session.address;
-          newRecipient = session.address;
-          await loadRequests();
-        }
-      }
-    );
-    const provider = window.ethereum as
-      | (typeof window.ethereum & {
-          on?: (event: string, handler: (value: unknown) => void) => void;
-          removeListener?: (
-            event: string,
-            handler: (value: unknown) => void
-          ) => void;
-        })
-      | undefined;
-    const clearWalletSession = () => {
-      walletAddress = '';
-      requests = [];
-      selectedRequest = null;
-      void fetch('/api/auth/logout', { method: 'POST' });
+    const forwardLegacyLink = () => {
+      const target = legacyWorkspaceTarget(window.location.hash);
+      if (target) void goto(target, { replaceState: true });
     };
-    provider?.on?.('accountsChanged', clearWalletSession);
-    provider?.on?.('chainChanged', clearWalletSession);
-    const scope = createScope({
-      root: scopeRoot,
-      mediaQueries: { reduceMotion: '(prefers-reduced-motion: reduce)' }
-    }).add((self) => {
-      const reduceMotion = self?.matches.reduceMotion ?? false;
-      animate('.hero-copy', {
-        opacity: [0, 1],
-        translateY: [10, 0],
-        duration: reduceMotion ? 0 : 420,
-        ease: 'out(3)'
-      });
-      animate('.summary-strip', {
-        opacity: [0, 1],
-        translateY: [12, 0],
-        duration: reduceMotion ? 0 : 480,
-        delay: 80,
-        ease: 'out(3)'
-      });
-      animate('#activity', {
-        opacity: [0, 1],
-        translateY: [14, 0],
-        duration: reduceMotion ? 0 : 520,
-        delay: 140,
-        ease: 'out(3)'
-      });
-    });
+    forwardLegacyLink();
+    window.addEventListener('hashchange', forwardLegacyLink);
+    const animations: ReturnType<typeof animate>[] = [];
+    let observer: IntersectionObserver | undefined;
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      animations.push(
+        animate(root.querySelectorAll('.hero-reveal'), {
+          opacity: [0, 1],
+          translateY: [10, 0],
+          duration: 220,
+          delay: (_, i) => (i ?? 0) * 35,
+          ease: 'out(3)'
+        })
+      );
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries)
+            if (entry.isIntersecting) {
+              animations.push(
+                animate(entry.target, {
+                  opacity: [0, 1],
+                  translateY: [10, 0],
+                  duration: 220,
+                  ease: 'out(3)'
+                })
+              );
+              observer?.unobserve(entry.target);
+            }
+        },
+        { threshold: 0.15 }
+      );
+      root
+        .querySelectorAll('.section-reveal')
+        .forEach((el) => observer?.observe(el));
+    }
     return () => {
-      scope.revert();
-      provider?.removeListener?.('accountsChanged', clearWalletSession);
-      provider?.removeListener?.('chainChanged', clearWalletSession);
+      window.removeEventListener('hashchange', forwardLegacyLink);
+      observer?.disconnect();
+      animations.forEach((animation) => animation.revert());
     };
   });
-
-  function getStatus(request: PaymentRequest): PaymentStatus {
-    const amount = amountBase(request);
-    const paid = paidBase(request);
-    if (paid === 0n) return 'Open';
-    if (paid < amount) return 'Partially paid';
-    if (paid === amount) return 'Paid';
-    return 'Overpaid';
-  }
-
-  function statusClass(status: PaymentStatus) {
-    if (status === 'Paid') return 'status-success';
-    if (status === 'Partially paid') return 'status-warning';
-    if (status === 'Overpaid') return 'status-info';
-    return 'status-neutral';
-  }
-
-  function showToast(message: string) {
-    toast = message;
-    setTimeout(() => (toast = ''), 3600);
-  }
-
-  async function handleDisconnect() {
-    isWalletMenuOpen = false;
-    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
-    walletAddress = '';
-    newRecipient = '';
-    requests = [];
-    selectedRequest = null;
-    showToast('Wallet disconnected.');
-  }
-
-  async function handleConnect() {
-    if (isConnecting) return;
-    isConnecting = true;
-    walletHint = 'Approve the wallet request and sign the MemoMatch message.';
-    try {
-      const address = await connectWallet();
-      await switchToArc();
-      await signInWithEthereum(address);
-      const sessionResponse = await fetch('/api/auth/session', {
-        cache: 'no-store'
-      });
-      const session = (await sessionResponse.json()) as {
-        authenticated?: boolean;
-        address?: string;
-        error?: string;
-      };
-      if (!sessionResponse.ok || !session.authenticated || !session.address) {
-        throw new Error(
-          session.error ?? 'The wallet session could not be opened.'
-        );
-      }
-      walletAddress = address;
-      newRecipient = address;
-      await loadRequests();
-      walletHint = '';
-      showToast('Wallet connected to Arc.');
-    } catch (error) {
-      walletAddress = '';
-      walletHint =
-        error instanceof Error ? error.message : 'Wallet connection failed.';
-      showToast(walletHint);
-    } finally {
-      isConnecting = false;
-    }
-  }
-
-  async function handleSwitchAccount() {
-    if (isConnecting) return;
-    const previousAddress = walletAddress;
-    isWalletMenuOpen = false;
-    isConnecting = true;
-    walletHint = 'Select a different account in MetaMask.';
-    try {
-      const address = await switchWalletAccount();
-      if (address.toLowerCase() === previousAddress.toLowerCase()) {
-        throw new Error('Select a different wallet account to switch.');
-      }
-      await switchToArc();
-      await signInWithEthereum(address);
-      const sessionResponse = await fetch('/api/auth/session', {
-        cache: 'no-store'
-      });
-      const session = (await sessionResponse.json()) as {
-        authenticated?: boolean;
-        address?: string;
-        error?: string;
-      };
-      if (!sessionResponse.ok || !session.authenticated || !session.address) {
-        throw new Error(
-          session.error ?? 'The wallet session could not be opened.'
-        );
-      }
-      walletAddress = address;
-      newRecipient = address;
-      await loadRequests();
-      walletHint = '';
-      showToast('Wallet account switched.');
-    } catch (error) {
-      walletHint =
-        error instanceof Error
-          ? error.message
-          : 'Wallet account switch failed.';
-      showToast(walletHint);
-    } finally {
-      isConnecting = false;
-    }
-  }
-
-  function openCreateRequest() {
-    if (!walletAddress) {
-      walletHint = 'Connect a wallet before creating a request.';
-      showToast(walletHint);
-      return;
-    }
-    newRecipient = walletAddress;
-    isCreateOpen = true;
-  }
-
-  async function createRequest() {
-    let amountBaseUnits = 0n;
-    try {
-      amountBaseUnits = parseUsdc(newAmount);
-    } catch {
-      amountBaseUnits = 0n;
-    }
-    if (!newTitle.trim() || amountBaseUnits <= 0n) {
-      showToast('Add a title and a positive USDC amount.');
-      return;
-    }
-    const amount = newAmount.trim();
-    isLoading = true;
-    try {
-      const response = await fetch('/api/requests', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          title: newTitle,
-          amount,
-          recipient: newRecipient
-        })
-      });
-      if (!response.ok) throw new Error('Could not create this request.');
-      const payload = await response.json();
-      requests = [payload.request, ...requests];
-      selectedRequest = payload.request;
-      isCreateOpen = false;
-      newTitle = '';
-      newAmount = '';
-      showToast('Payment request created.');
-    } catch (error) {
-      showToast(
-        error instanceof Error
-          ? error.message
-          : 'Could not create this request.'
-      );
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  async function copyLink(request: PaymentRequest) {
-    const link = `${window.location.origin}/pay/${request.token}`;
-    await navigator.clipboard?.writeText(link);
-    showToast('Payment link copied.');
-  }
-
-  function selectFilter(value: 'All' | PaymentStatus) {
-    statusFilter = value;
-    isWalletMenuOpen = false;
-  }
 </script>
 
 <svelte:head>
-  <title>Overview | MemoMatch</title>
+  <title>MemoMatch | USDC payments. Clearly matched.</title>
+  <meta
+    name="description"
+    content="Create payment links, match incoming USDC transfers to the right request on Arc, and keep a verifiable receipt."
+  />
 </svelte:head>
 
-<div bind:this={scopeRoot} class="min-h-screen bg-[#f6f8fb] text-[#172238]">
-  <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-    <div class="soft-grid absolute inset-x-0 top-0 h-[520px] opacity-70"></div>
-    <div
-      class="absolute -right-48 -top-52 h-[560px] w-[560px] rounded-full bg-[#dbe7ff]/45 blur-3xl"
-    ></div>
-  </div>
-
-  <header
-    class="sticky top-0 z-40 border-b border-[#e2e7ef]/90 bg-[#f6f8fb]/90 backdrop-blur-xl"
-  >
-    <div
-      class="mx-auto flex h-[72px] max-w-[1480px] items-center justify-between px-5 lg:px-8"
-    >
-      <div class="flex items-center gap-3">
-        <button
-          class="btn btn-ghost btn-square lg:hidden"
-          aria-label="Open navigation"
-          onclick={() => (isMobileNavOpen = !isMobileNavOpen)}
-          ><Menu size={19} strokeWidth={1.8} /></button
-        >
-        <a href="/" class="flex items-center gap-3" aria-label="MemoMatch home"
-          ><span
-            class="grid h-9 w-9 place-items-center rounded-[10px] bg-[#172238] text-white shadow-[0_8px_18px_rgba(23,34,56,0.16)]"
-            ><svg
-              viewBox="0 0 24 24"
-              class="h-5 w-5"
-              fill="none"
-              aria-hidden="true"
-              ><path
-                d="M5 17V7l4 5 3-4 3 4 4-5v10"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              /><circle cx="18.5" cy="6" r="1.5" fill="#8daeff" /></svg
-            ></span
-          ><span class="text-[15px] font-semibold tracking-[-0.005em]"
-            >MemoMatch</span
-          ></a
-        >
-      </div>
-      <div class="flex items-center gap-2.5">
-        {#if walletAddress}
-          <div class="relative">
-            <button
-              class="btn btn-sm h-10 gap-2 rounded-lg border-[#dce3ee] bg-white px-3 font-medium text-[#33415b] shadow-none hover:border-[#bdc9dd]"
-              onclick={() => (isWalletMenuOpen = !isWalletMenuOpen)}
-              ><span class="h-2 w-2 rounded-full bg-[#2c9b70]"
-              ></span>{shortenAddress(walletAddress, 5, 4)}<ChevronDown
-                size={15}
-                strokeWidth={1.8}
-              /></button
-            >{#if isWalletMenuOpen}<div
-                class="absolute right-0 top-12 z-50 w-56 rounded-xl border border-[#e2e7ef] bg-white p-2 shadow-[0_20px_50px_rgba(23,34,56,0.14)]"
-              >
-                <div class="px-3 py-2 text-xs text-[#7b879a]">
-                  Connected wallet
-                </div>
-                <div
-                  class="break-all px-3 pb-2 font-mono text-xs text-[#33415b]"
-                >
-                  {walletAddress}
-                </div>
-                <a
-                  class="btn btn-ghost btn-sm w-full justify-start gap-2 text-[#596579]"
-                  href={ARC_EXPLORER_URL}
-                  target="_blank"
-                  rel="noreferrer"><ExternalLink size={14} />View on explorer</a
-                >
-                <button
-                  class="btn btn-ghost btn-sm w-full justify-start gap-2 text-[#596579]"
-                  type="button"
-                  onclick={handleSwitchAccount}
-                  disabled={isConnecting}
-                  ><WalletCards size={14} />Switch account</button
-                >
-                <button
-                  class="btn btn-ghost btn-sm w-full justify-start gap-2 text-[#b95757] hover:bg-[#fff4f4] hover:text-[#9b3f3f]"
-                  type="button"
-                  onclick={handleDisconnect}
-                  ><LogOut size={14} />Disconnect wallet</button
-                >
-              </div>{/if}
-          </div>
-        {:else}<button
-            class="btn btn-primary btn-sm h-10 rounded-lg px-4 shadow-[0_8px_18px_rgba(36,84,214,0.18)]"
-            disabled={isConnecting}
-            onclick={handleConnect}
-            >{#if isConnecting}<span class="loading loading-spinner loading-xs"
-              ></span>Connecting…{:else}Connect wallet{/if}</button
-          >{/if}
-      </div>
-    </div>
+<div class="landing" bind:this={root}>
+  <header class="site-header wrap">
+    <Brand />
+    <nav aria-label="Main navigation">
+      <a href="#how-it-works" class="desktop-link">How it works</a>
+      <a href="/docs">Docs</a>
+      <a href="/app" class="nav-app">Open app <ArrowUpRight size={16} /></a>
+    </nav>
   </header>
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero-inner">
+        <div class="hero-copy hero-reveal">
+          <p class="eyebrow">PAYMENT LINKS FOR TEAMS ON ARC</p>
+          <h1 id="hero-title">
+            USDC payments.<br /><span>Clearly matched.</span>
+          </h1>
+          <p class="hero-description">
+            Create payment links, match incoming transfers to the right request,
+            and keep a verifiable receipt. Built for teams receiving USDC on
+            Arc.
+          </p>
+          <div class="hero-actions">
+            <a class="action-primary" href="/app?intent=create"
+              >Create payment request <ArrowRight size={18} /></a
+            >
+            <a class="text-link" href="#how-it-works"
+              >See how it works <ArrowRight size={16} /></a
+            >
+          </div>
+          <p class="wallet-support">Works with MetaMask and Rabby</p>
+          {#if ARC_ENVIRONMENT === 'testnet'}<p class="environment">
+              Arc testnet <span>·</span> Test USDC only
+            </p>{/if}
+        </div>
+        <figure
+          class="product-example hero-reveal"
+          aria-label="Illustrative example of a payment request with a matched partial payment"
+        >
+          <figcaption>
+            <span class="example-dot"></span> Illustrative example
+          </figcaption>
+          <div class="example-sheet">
+            <div class="example-top">
+              <span><ReceiptText size={17} /> PAYMENT REQUEST</span><span
+                class="reference">INV-001</span
+              >
+            </div>
+            <p class="example-requester">Requested by Willow Studio</p>
+            <h2>Website audit</h2>
+            <div class="example-amount">120.00 <span>USDC</span></div>
+            <div class="example-divider"></div>
+            <div class="matched-transfer">
+              <span class="match-icon"><Check size={17} /></span>
+              <div>
+                <strong>Payment matched</strong><span>Reference INV-001</span>
+              </div>
+              <strong class="transfer-amount">+40.00 <small>USDC</small></strong
+              >
+            </div>
+            <div class="remaining">
+              <span>Remaining</span><strong>80.00 USDC</strong>
+            </div>
+            <div class="example-progress" aria-hidden="true"><span></span></div>
+            <div class="example-bottom">
+              <span>Partially paid</span><span
+                >Each transfer stays traceable</span
+              >
+            </div>
+          </div>
+          <div class="example-footnote">
+            <Fingerprint size={18} /><span
+              >One reference. A clear payment trail.</span
+            >
+          </div>
+        </figure>
+      </div>
+    </section>
 
-  <div class="mx-auto flex max-w-[1480px]">
-    <aside
-      class:hidden={!isMobileNavOpen}
-      class="fixed inset-y-[72px] left-0 z-30 w-[248px] border-r border-[#e2e7ef] bg-[#f6f8fb] px-5 py-6 lg:sticky lg:top-[72px] lg:block lg:h-[calc(100vh-72px)] lg:shrink-0 lg:border-r-0 lg:bg-transparent lg:px-6 lg:py-8"
+    <section
+      class="workflow wrap section-reveal"
+      id="how-it-works"
+      aria-labelledby="workflow-title"
     >
-      <nav aria-label="Main navigation" class="flex h-full flex-col">
+      <div class="section-heading">
+        <p class="eyebrow">FROM REQUEST TO RECEIPT</p>
+        <h2 id="workflow-title">One link. Three simple steps.</h2>
+      </div>
+      <div class="steps">
+        <article>
+          <span class="step-number">01 <FilePlus2 size={21} /></span>
+          <h3>Create a request</h3>
+          <p>
+            Add a purpose and an amount in USDC. MemoMatch gives the request its
+            own payment reference.
+          </p>
+        </article>
+        <article>
+          <span class="step-number">02 <Link2 size={21} /></span>
+          <h3>Share the link</h3>
+          <p>
+            The payer reviews the details and sends USDC from their wallet
+            directly to yours.
+          </p>
+        </article>
+        <article>
+          <span class="step-number">03 <CheckCircle2 size={21} /></span>
+          <h3>See what’s settled</h3>
+          <p>
+            Verified transfers update the balance. Open the receipt to follow
+            each payment on Arc.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="clarity-band">
+      <div class="wrap clarity section-reveal">
         <div>
-          <div
-            class="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8994a6]"
-          >
-            Workspace
-          </div>
-          <a
-            href="#overview"
-            class="flex items-center gap-3 rounded-lg bg-[#e9efff] px-3 py-2.5 text-sm font-semibold text-[#2454d6]"
-            ><LayoutDashboard size={17} strokeWidth={1.8} />Overview</a
-          ><a
-            href="#requests"
-            class="mt-1 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#596579] transition-colors hover:bg-white hover:text-[#172238]"
-            ><FileCheck2 size={17} strokeWidth={1.8} />Payment requests</a
-          ><a
-            href="#activity"
-            class="mt-1 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#596579] transition-colors hover:bg-white hover:text-[#172238]"
-            ><Activity size={17} strokeWidth={1.8} />Activity</a
-          >
+          <p class="eyebrow">LESS GUESSWORK</p>
+          <h2>The same amount.<br />The right request.</h2>
+          <p class="clarity-intro">
+            Two requests can have the same amount. Their payment references keep
+            incoming transfers distinct.
+          </p>
         </div>
-        <div class="mt-auto space-y-4">
-          <div class="rounded-xl border border-[#dce4f1] bg-white/75 p-4">
-            <div
-              class="mb-3 flex items-center gap-2 text-xs font-semibold text-[#33415b]"
-            >
-              <ShieldCheck size={15} class="text-[#2454d6]" />Built for proof
-            </div>
-            <p class="text-xs leading-5 text-[#748095]">
-              Every payment keeps its Arc reference, block and explorer trail.
-            </p>
-            <a
-              href="/docs"
-              class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#2454d6]"
-              >Read the docs<ArrowUpRight size={13} /></a
-            >
-          </div>
-          <div class="px-3 text-[11px] text-[#9aa4b5]">
-            MemoMatch v0.1 · Arc {ARC_ENVIRONMENT}
-          </div>
-        </div>
-      </nav>
-    </aside>
-
-    <main class="min-w-0 flex-1 px-5 py-8 lg:px-10 lg:py-10">
-      <section id="overview" class="hero-copy mx-auto max-w-[1180px]">
-        <div
-          class="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"
-        >
-          <div>
-            <h1
-              class="max-w-[680px] text-[clamp(2rem,4vw,3.25rem)] font-semibold leading-[1.04] tracking-[-0.025em] text-[#172238]"
-            >
-              Tie every payment to its work.
-            </h1>
-            <p class="mt-4 max-w-[580px] text-[15px] leading-7 text-[#66758b]">
-              Create a request, share one clean link and let Arc keep the
-              settlement trail in view.
-            </p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button
-              class="btn btn-primary h-11 rounded-lg px-5 shadow-[0_8px_18px_rgba(36,84,214,0.18)]"
-              onclick={openCreateRequest}><Plus size={16} />New request</button
-            >
-          </div>
-        </div>
-        {#if !walletAddress && walletHint}
-          <div
-            class="mt-4 flex items-center gap-3 rounded-lg border border-[#c9d7f6] bg-[#f2f6ff] px-4 py-3 text-sm text-[#33415b]"
-            role="status"
-            aria-live="polite"
-          >
-            <WalletCards size={17} class="shrink-0 text-[#2454d6]" />
-            <span>{walletHint}</span>
-          </div>
-        {/if}
-      </section>
-
-      <section
-        class="summary-strip mx-auto mt-9 max-w-[1180px] rounded-xl border border-[#e0e6ef] bg-white/85 px-5 py-5 shadow-[0_14px_40px_rgba(23,34,56,0.035)] sm:px-6"
-      >
-        <div class="grid grid-cols-2 divide-x divide-[#edf0f5] sm:grid-cols-4">
-          <div class="px-2 sm:px-4">
-            <div class="text-xs text-[#7f8a9d]">Outstanding</div>
-            <div
-              class="mono-numbers mt-2 text-[23px] font-semibold tracking-[-0.015em] text-[#172238]"
-            >
-              ${formatUsdcBaseUnits(totals.outstanding)}
-            </div>
-            <div class="mt-1 text-[11px] text-[#9aa4b5]">
-              Awaiting settlement
-            </div>
-          </div>
-          <div class="px-4">
-            <div class="text-xs text-[#7f8a9d]">Collected</div>
-            <div
-              class="mono-numbers mt-2 text-[23px] font-semibold tracking-[-0.015em] text-[#172238]"
-            >
-              ${formatUsdcBaseUnits(totals.collected)}
-            </div>
-            <div
-              class="mt-1 flex items-center gap-1 text-[11px] text-[#2b8c67]"
-            >
-              <Check size={12} />Verified on Arc
-            </div>
-          </div>
-          <div class="px-4">
-            <div class="text-xs text-[#7f8a9d]">Paid requests</div>
-            <div
-              class="mono-numbers mt-2 text-[23px] font-semibold tracking-[-0.015em] text-[#172238]"
-            >
-              {totals.paid}<span
-                class="ml-1 text-base font-medium text-[#9aa4b5]"
-                >/ {requests.length}</span
-              >
-            </div>
-            <div class="mt-1 text-[11px] text-[#9aa4b5]">This workspace</div>
-          </div>
-          <div class="px-4">
-            <div class="text-xs text-[#7f8a9d]">Avg. settlement</div>
-            <div
-              class="mono-numbers mt-2 text-[23px] font-semibold tracking-[-0.015em] text-[#172238]"
-            >
-              {requests.length ? 'Calculating' : '—'}
-            </div>
-            <div class="mt-1 text-[11px] text-[#9aa4b5]">
-              From request to final
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="requests"
-        class="workspace-panel mx-auto mt-8 max-w-[1180px]"
-      >
-        <div
-          class="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center"
-        >
-          <div>
-            <h2
-              class="text-[17px] font-semibold tracking-[-0.005em] text-[#172238]"
-            >
-              Payment requests
-            </h2>
-            <p class="mt-1 text-xs text-[#7f8a9d]">
-              Private work labels, public payment references.
-            </p>
-          </div>
-          <div class="flex items-center gap-2">
-            <label
-              class="input input-sm h-9 w-full max-w-[210px] gap-2 rounded-lg border-[#dfe5ee] bg-white text-[#596579] shadow-none focus-within:border-[#9db2eb] sm:w-[210px]"
-              ><Search size={15} strokeWidth={1.8} /><input
-                bind:value={query}
-                aria-label="Search payment requests"
-                placeholder="Search requests"
-              /></label
-            >
-            <div class="dropdown dropdown-end">
-              <button
-                class="btn btn-ghost btn-sm h-9 gap-2 rounded-lg border border-[#dfe5ee] bg-white px-3 text-xs font-medium text-[#596579] hover:border-[#bdc9dd] hover:bg-white"
-                ><Filter size={14} />{statusFilter}<ChevronDown
-                  size={13}
-                /></button
-              >
-              <ul
-                class="menu dropdown-content z-[1] mt-2 w-44 rounded-xl border border-[#e2e7ef] bg-white p-2 shadow-[0_18px_36px_rgba(23,34,56,0.12)]"
-              >
-                {#each ['All', 'Open', 'Partially paid', 'Paid', 'Overpaid'] as filter}<li
-                  >
-                    <button
-                      class:text-[#2454d6]={statusFilter === filter}
-                      onclick={() =>
-                        selectFilter(filter as 'All' | PaymentStatus)}
-                      >{filter}</button
-                    >
-                  </li>{/each}
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div
-          class="overflow-hidden rounded-xl border border-[#e0e6ef] bg-white shadow-[0_14px_40px_rgba(23,34,56,0.035)]"
-        >
-          <div
-            class="hidden grid-cols-[minmax(240px,1.7fr)_130px_130px_150px_40px] items-center gap-4 border-b border-[#edf0f5] bg-[#fbfcfe] px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#929cad] md:grid"
-          >
-            <div>Request</div>
-            <div>Amount</div>
-            <div>Status</div>
-            <div>Created</div>
-            <div></div>
-          </div>
-          {#if filteredRequests.length === 0}
-            <div class="px-6 py-16 text-center">
-              <div
-                class="mx-auto grid h-11 w-11 place-items-center rounded-full bg-[#eef2f8] text-[#718198]"
-              >
-                <Search size={18} />
-              </div>
-              <h3 class="mt-4 text-sm font-semibold text-[#33415b]">
-                {#if requests.length === 0 && walletAddress}
-                  No requests for this wallet
-                {:else}
-                  No requests found
-                {/if}
-              </h3>
-              <p class="mt-1 text-xs text-[#7f8a9d]">
-                {#if requests.length === 0 && walletAddress}
-                  Requests are private to the connected wallet. Switch accounts
-                  to view another workspace.
-                {:else}
-                  Try another search or create a new payment request.
-                {/if}
-              </p>
-            </div>
-          {:else}
-            {#each filteredRequests as request}
-              <button
-                class="group grid w-full grid-cols-1 gap-3 border-b border-[#edf0f5] px-5 py-4 text-left transition-colors last:border-b-0 hover:bg-[#fbfcfe] md:grid-cols-[minmax(240px,1.7fr)_130px_130px_150px_40px] md:items-center md:gap-4"
-                onclick={() => (selectedRequest = request)}
-              >
-                <div class="min-w-0">
-                  <div class="flex items-center gap-3">
-                    <span
-                      class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#eef2ff] text-[#2454d6]"
-                      ><Link2 size={15} strokeWidth={1.8} /></span
-                    ><span class="min-w-0"
-                      ><span
-                        class="block truncate text-sm font-semibold text-[#33415b]"
-                        >{request.title}</span
-                      ><span
-                        class="mt-1 block font-mono text-[10px] text-[#9aa4b5]"
-                        >{request.token}</span
-                      ></span
-                    >
-                  </div>
-                </div>
-                <div class="flex items-center justify-between md:block">
-                  <span class="text-[11px] text-[#9aa4b5] md:hidden"
-                    >Amount</span
-                  ><span
-                    class="mono-numbers text-sm font-semibold text-[#33415b]"
-                    >${formatUsdcBaseUnits(amountBase(request))}
-                    <span class="text-[11px] font-medium text-[#9aa4b5]"
-                      >USDC</span
-                    ></span
-                  >
-                </div>
-                <div class="flex items-center justify-between md:block">
-                  <span class="text-[11px] text-[#9aa4b5] md:hidden"
-                    >Status</span
-                  ><span
-                    class={'status-chip ' + statusClass(getStatus(request))}
-                    >{getStatus(request)}</span
-                  >
-                </div>
-                <div class="flex items-center justify-between md:block">
-                  <span class="text-[11px] text-[#9aa4b5] md:hidden"
-                    >Created</span
-                  ><span class="text-xs text-[#596579]"
-                    >{formatRelative(request.createdAt)}</span
-                  >
-                </div>
-                <div class="hidden justify-end md:flex">
-                  <MoreHorizontal
-                    size={18}
-                    class="text-[#9aa4b5] transition-colors group-hover:text-[#2454d6]"
-                  />
-                </div>
-              </button>
-            {/each}
-          {/if}
-        </div>
-      </section>
-
-      <section
-        id="activity"
-        class="mx-auto mt-8 grid max-w-[1180px] gap-5 lg:grid-cols-[1.4fr_0.8fr]"
-      >
-        <div
-          class="rounded-xl border border-[#e0e6ef] bg-white p-5 shadow-[0_14px_40px_rgba(23,34,56,0.035)] sm:p-6"
-        >
-          <div class="flex items-start justify-between">
+        <div class="benefits">
+          <article>
+            <Fingerprint size={21} />
             <div>
-              <h2
-                class="text-[17px] font-semibold tracking-[-0.005em] text-[#172238]"
-              >
-                Settlement activity
-              </h2>
-              <p class="mt-1 text-xs text-[#7f8a9d]">
-                The latest verified payment events.
+              <h3>A reference for every request</h3>
+              <p>
+                Match supported memo transfers to their request, without relying
+                on the amount alone.
               </p>
             </div>
-            <div class="rounded-lg bg-[#f0f5ff] p-2 text-[#2454d6]">
-              <Activity size={17} />
+          </article>
+          <article>
+            <ReceiptText size={21} />
+            <div>
+              <h3>A balance that stays clear</h3>
+              <p>
+                Track partial payments and the remaining amount. Verified
+                transfers appear separately on the receipt, with explorer links.
+              </p>
             </div>
-          </div>
-          <div class="mt-6 space-y-5">
-            {#each requests
-              .flatMap( (request) => request.payments.map( (payment) => ({ request, payment }) ) )
-              .slice(0, 3) as item}<div class="flex gap-3">
-                <div
-                  class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#eaf8f1] text-[#2b8c67]"
-                >
-                  <CheckCircle2 size={16} />
-                </div>
-                <div class="min-w-0 flex-1">
-                  <div
-                    class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"
-                  >
-                    <p class="truncate text-sm font-semibold text-[#33415b]">
-                      {item.request.title}
-                    </p>
-                    <p
-                      class="mono-numbers text-sm font-semibold text-[#2b8c67]"
-                    >
-                      +${formatUsdcBaseUnits(
-                        BigInt(
-                          item.payment.amountMicroUsdc ??
-                            parseUsdc(item.payment.amount)
-                        )
-                      )}
-                    </p>
-                  </div>
-                  <div
-                    class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#8c97a8]"
-                  >
-                    <span>{formatDate(item.payment.receivedAt)}</span><span
-                      class="h-1 w-1 rounded-full bg-[#c7cfdb]"
-                    ></span><span class="font-mono"
-                      >{shortenAddress(item.payment.payer)}</span
-                    ><span class="h-1 w-1 rounded-full bg-[#c7cfdb]"
-                    ></span><span class="text-[#2b8c67]">Verified</span>
-                  </div>
-                </div>
-              </div>{/each}
-          </div>
+          </article>
+          <article>
+            <ShieldCheck size={21} />
+            <div>
+              <h3>Direct payments, clear boundaries</h3>
+              <p>
+                Funds go to the recipient wallet. Internal labels stay private;
+                payment details are visible to anyone with the link.
+              </p>
+            </div>
+          </article>
         </div>
-        <div
-          class="relative overflow-hidden rounded-xl border border-[#cad7f7] bg-[#eef3ff] p-5 sm:p-6"
-        >
-          <div
-            class="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-[#d9e5ff] blur-2xl"
-          ></div>
-          <div class="relative">
-            <div
-              class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#2454d6]"
-            >
-              <Zap size={14} />Arc native flow
-            </div>
-            <h2
-              class="mt-5 max-w-[290px] text-[22px] font-semibold leading-[1.14] tracking-[-0.015em] text-[#172238]"
-            >
-              A payment trail your whole team can trust.
-            </h2>
-            <p class="mt-3 max-w-[290px] text-sm leading-6 text-[#596b87]">
-              Memo references, final settlement and clear receipts stay together
-              from request to close.
-            </p>
-            <div
-              class="mt-6 flex items-center gap-2 text-xs font-semibold text-[#2454d6]"
-            >
-              <ShieldCheck size={15} />Verified memo trail
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
+      </div>
+    </section>
 
-  <footer
-    class="mx-auto flex max-w-[1480px] flex-wrap items-center justify-between gap-3 border-t border-[#e2e7ef] px-5 pb-8 pt-5 text-xs text-[#8994a6] lg:px-8"
-  >
-    <span>MemoMatch v0.1 · Arc {ARC_ENVIRONMENT}</span>
-    <div class="flex items-center gap-4">
-      <a
-        href="/docs"
-        class="inline-flex items-center gap-1.5 font-semibold text-[#596579] transition-colors hover:text-[#2454d6]"
-        >Integration docs<ArrowUpRight size={13} /></a
+    <section class="faq wrap section-reveal" aria-labelledby="faq-title">
+      <div class="section-heading">
+        <p class="eyebrow">BEFORE GETTING STARTED</p>
+        <h2 id="faq-title">A few useful details.</h2>
+      </div>
+      <div class="faq-list">
+        <Disclosure id="faq-wallet" title="Which wallet do I need?"
+          >MemoMatch works with MetaMask and Rabby in supported desktop browsers
+          and mobile wallet browsers. Payers need USDC on the configured Arc
+          network, including enough to cover the network fee.</Disclosure
+        >
+        <Disclosure id="faq-signin" title="Does signing in make a payment?"
+          >No. Signing in proves ownership of the wallet by signing a message.
+          It does not send a transaction or cost a network fee. Payments require
+          a separate confirmation in the payer’s wallet.</Disclosure
+        >
+        <Disclosure
+          id="faq-public"
+          title="What can someone with the payment link see?"
+          >The requester name, public purpose and reference, recipient wallet,
+          amounts, payment status and transfer receipts are public to anyone
+          with the link. The internal work label stays in the private workspace.</Disclosure
+        >
+        <Disclosure id="faq-fees" title="Are there network fees?"
+          >Sending a payment requires an Arc network fee paid in USDC. The
+          wallet shows the fee before confirmation. Creating a payment request
+          does not send an onchain transaction.</Disclosure
+        >
+      </div>
+    </section>
+
+    <section class="closing wrap section-reveal">
+      <div>
+        <p class="eyebrow">START WITH ONE REQUEST</p>
+        <h2>Make the next payment clear.</h2>
+      </div>
+      <a class="action-primary" href="/app?intent=create"
+        >Create payment request <ArrowRight size={18} /></a
       >
-      <a
-        href="/api/requests/export"
-        class="inline-flex items-center gap-1.5 font-semibold text-[#596579] transition-colors hover:text-[#2454d6]"
-        ><Download size={13} />Export CSV</a
+    </section>
+    <div class="developer-note wrap">
+      <span>Building your own payment flow?</span><a href="/docs"
+        >Explore the integration docs <ArrowUpRight size={15} /></a
       >
     </div>
+  </main>
+  <footer class="wrap site-footer">
+    <Brand /><span>USDC payment requests on Arc</span><a href="/docs"
+      >Documentation</a
+    >
   </footer>
-
-  {#if selectedRequest}<div
-      class="fixed inset-0 z-50 flex items-end justify-end bg-[#172238]/20 p-0 backdrop-blur-[2px] sm:p-5"
-      role="presentation"
-      onclick={(event) =>
-        event.target === event.currentTarget && (selectedRequest = null)}
-    >
-      <aside
-        class="h-[min(720px,100vh)] w-full overflow-y-auto border-l border-[#dfe5ee] bg-white p-6 shadow-[-20px_0_50px_rgba(23,34,56,0.12)] sm:max-w-[460px] sm:rounded-xl sm:border"
-      >
-        <div class="flex items-start justify-between">
-          <div>
-            <div
-              class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8994a6]"
-            >
-              Payment request
-            </div>
-            <h2
-              class="mt-2 text-xl font-semibold tracking-[-0.012em] text-[#172238]"
-            >
-              {selectedRequest.title}
-            </h2>
-          </div>
-          <button
-            class="btn btn-ghost btn-square btn-sm rounded-lg text-[#7f8a9d]"
-            aria-label="Close details"
-            onclick={() => (selectedRequest = null)}><X size={18} /></button
-          >
-        </div>
-        <div class="mt-6 rounded-xl bg-[#f7f9fc] p-4">
-          <div class="text-xs text-[#7f8a9d]">Amount due</div>
-          <div
-            class="mono-numbers mt-2 text-3xl font-semibold tracking-[-0.02em] text-[#172238]"
-          >
-            ${formatUsdc(selectedRequest.amount)}
-            <span class="text-base font-medium text-[#7f8a9d]">USDC</span>
-          </div>
-          <div
-            class="mt-4 flex items-center justify-between border-t border-[#e6ebf2] pt-3 text-xs"
-          >
-            <span class="text-[#7f8a9d]">Status</span><span
-              class={`status-chip ${statusClass(getStatus(selectedRequest))}`}
-              >{getStatus(selectedRequest)}</span
-            >
-          </div>
-        </div>
-        <div class="mt-6 space-y-4">
-          <div>
-            <div class="mb-2 text-xs font-semibold text-[#596579]">
-              Payment link
-            </div>
-            <div class="flex items-center gap-2">
-              <div
-                class="min-w-0 flex-1 truncate rounded-lg border border-[#dfe5ee] bg-white px-3 py-2.5 font-mono text-[11px] text-[#66758b]"
-              >
-                /pay/{selectedRequest.token}
-              </div>
-              <button
-                class="btn btn-square btn-sm h-10 w-10 rounded-lg border border-[#dfe5ee] bg-white text-[#596579] shadow-none"
-                aria-label="Copy payment link"
-                onclick={() => copyLink(selectedRequest!)}
-                ><Copy size={15} /></button
-              >
-            </div>
-          </div>
-          <div>
-            <div class="mb-2 text-xs font-semibold text-[#596579]">
-              Arc recipient
-            </div>
-            <div
-              class="break-all rounded-lg border border-[#dfe5ee] bg-white px-3 py-2.5 font-mono text-[11px] text-[#66758b]"
-            >
-              {selectedRequest.recipient}
-            </div>
-          </div>
-        </div>
-        <div class="mt-7">
-          <div class="mb-3 flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-[#33415b]">
-              Verified payments
-            </h3>
-            <span class="text-xs text-[#8994a6]"
-              >{selectedRequest.payments.length}</span
-            >
-          </div>
-          {#if selectedRequest.payments.length === 0}<div
-              class="rounded-lg border border-dashed border-[#dce3ee] px-4 py-7 text-center"
-            >
-              <WalletCards size={20} class="mx-auto text-[#a4afc0]" />
-              <p class="mt-2 text-xs text-[#7f8a9d]">
-                No payments have been verified yet.
-              </p>
-            </div>{:else}<div class="space-y-2">
-              {#each selectedRequest.payments as payment}<a
-                  href={payment.explorerUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  class="flex items-center justify-between rounded-lg border border-[#e7ebf1] px-3 py-3 transition-colors hover:border-[#bdc9dd] hover:bg-[#fbfcfe]"
-                  ><div>
-                    <div
-                      class="mono-numbers text-sm font-semibold text-[#33415b]"
-                    >
-                      ${formatUsdc(payment.amount)}
-                    </div>
-                    <div class="mt-1 font-mono text-[10px] text-[#9aa4b5]">
-                      {shortenAddress(payment.transactionHash, 8, 6)}
-                    </div>
-                  </div>
-                  <ExternalLink size={14} class="text-[#8994a6]" /></a
-                >{/each}
-            </div>{/if}
-        </div>
-        <div class="mt-7 flex gap-2">
-          <a
-            class="btn btn-primary btn-sm h-10 flex-1 rounded-lg"
-            href={`/pay/${selectedRequest.token}`}
-            >Open payment page<ArrowUpRight size={14} /></a
-          ><a
-            class="btn btn-ghost btn-sm h-10 rounded-lg border border-[#dfe5ee] px-3"
-            href={`/receipt/${selectedRequest.token}`}
-            aria-label="Open receipt"><FileCheck2 size={15} /></a
-          >
-        </div>
-      </aside>
-    </div>{/if}
-
-  {#if isCreateOpen}
-    <div
-      class="fixed inset-0 z-50 grid place-items-center bg-[#172238]/25 p-4 backdrop-blur-[3px]"
-      role="presentation"
-      onclick={(event) =>
-        event.target === event.currentTarget && (isCreateOpen = false)}
-    >
-      <div
-        class="w-full max-w-[520px] rounded-2xl border border-[#d6e0ed] bg-[#fcfdff] p-6 shadow-[0_24px_80px_rgba(23,34,56,0.2)] sm:p-7"
-      >
-        <div class="flex items-start justify-between gap-5">
-          <div>
-            <div
-              class="grid h-9 w-9 place-items-center rounded-xl bg-[#e8efff] text-[#2454d6]"
-            >
-              <FilePlus2 size={17} />
-            </div>
-            <h2
-              class="mt-4 text-xl font-semibold tracking-[-0.012em] text-[#172238]"
-            >
-              New payment request
-            </h2>
-            <p class="mt-1 max-w-[380px] text-sm leading-6 text-[#6d7b90]">
-              Set the work label, amount and recipient for this Arc payment
-              link.
-            </p>
-          </div>
-          <button
-            class="btn btn-ghost btn-square btn-sm rounded-lg text-[#7f8a9d] hover:bg-[#eef2f8]"
-            aria-label="Close dialog"
-            onclick={() => (isCreateOpen = false)}><X size={18} /></button
-          >
-        </div>
-
-        <div class="mt-7 space-y-4">
-          <label class="block">
-            <span
-              class="mb-2 flex items-center justify-between text-xs font-semibold text-[#33415b]"
-              ><span>Private work label</span><span
-                class="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9aa4b5]"
-                >Required</span
-              ></span
-            >
-            <span
-              class="flex min-h-12 items-center rounded-xl border-2 border-[#d8e1ee] bg-[#f7f9fc] px-3.5 transition-colors focus-within:border-[#2454d6] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#2454d6]/10"
-            >
-              <input
-                class="h-10 min-h-0 w-full border-0 bg-transparent px-0 text-sm text-[#172238] shadow-none outline-none placeholder:text-[#9aa4b5] focus:border-transparent focus:outline-none focus:ring-0"
-                bind:value={newTitle}
-                placeholder="e.g. Arc integration sprint"
-              />
-            </span>
-            <span class="mt-2 block text-[11px] leading-5 text-[#8994a6]"
-              >Only the account owner can see this label.</span
-            >
-          </label>
-
-          <label class="block">
-            <span
-              class="mb-2 flex items-center justify-between text-xs font-semibold text-[#33415b]"
-              ><span>Amount</span><span
-                class="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#2454d6]"
-                >USDC</span
-              ></span
-            >
-            <span
-              class="flex min-h-12 items-center rounded-xl border-2 border-[#d8e1ee] bg-[#f7f9fc] px-3.5 transition-colors focus-within:border-[#2454d6] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#2454d6]/10"
-            >
-              <input
-                class="mono-numbers h-10 min-h-0 w-full border-0 bg-transparent px-0 text-base text-[#172238] shadow-none outline-none placeholder:text-[#9aa4b5] focus:border-transparent focus:outline-none focus:ring-0"
-                bind:value={newAmount}
-                inputmode="decimal"
-                placeholder="0.00"
-                aria-label="Amount in USDC"
-              />
-              <span
-                class="ml-3 shrink-0 rounded-md bg-[#e9efff] px-2 py-1 text-[10px] font-bold tracking-[0.08em] text-[#2454d6]"
-                >USDC</span
-              >
-            </span>
-            <span class="mt-2 block text-[11px] leading-5 text-[#8994a6]"
-              >The amount cannot be changed after creation.</span
-            >
-          </label>
-
-          <label class="block">
-            <span
-              class="mb-2 flex items-center justify-between text-xs font-semibold text-[#33415b]"
-              ><span>Recipient wallet</span><span
-                class="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9aa4b5]"
-                >Arc address</span
-              ></span
-            >
-            <span
-              class="flex min-h-12 items-center rounded-xl border-2 border-[#d8e1ee] bg-[#f7f9fc] px-3.5 transition-colors focus-within:border-[#2454d6] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#2454d6]/10"
-            >
-              <input
-                class="h-10 min-h-0 w-full border-0 bg-transparent px-0 font-mono text-xs text-[#172238] shadow-none outline-none focus:border-transparent focus:outline-none focus:ring-0"
-                bind:value={newRecipient}
-                aria-label="Recipient wallet"
-                readonly
-              />
-            </span>
-            <span class="mt-2 block text-[11px] leading-5 text-[#8994a6]"
-              >Payments settle directly to this address.</span
-            >
-          </label>
-        </div>
-
-        <div
-          class="mt-7 flex items-center justify-end gap-2 border-t border-[#e7ecf3] pt-5"
-        >
-          <button
-            class="btn btn-ghost h-10 rounded-lg px-4 text-[#596579] hover:bg-[#eef2f8]"
-            onclick={() => (isCreateOpen = false)}>Cancel</button
-          >
-          <button
-            class="btn btn-primary h-10 rounded-lg px-4 shadow-[0_8px_18px_rgba(36,84,214,0.18)]"
-            disabled={isLoading}
-            onclick={createRequest}
-            >{#if isLoading}<span class="loading loading-spinner loading-xs"
-              ></span>{/if}Create request</button
-          >
-        </div>
-      </div>
-    </div>
-  {/if}
-
-  {#if toast}
-    <div
-      class="toast toast-end toast-bottom z-[60] p-4"
-      role="status"
-      aria-live="polite"
-    >
-      <div
-        class="alert border border-[#c9d7f6] bg-[#172238] text-white shadow-[0_14px_40px_rgba(23,34,56,0.2)]"
-      >
-        <CheckCircle2 size={17} class="text-[#9bcbb6]" /><span class="text-sm"
-          >{toast}</span
-        >
-      </div>
-    </div>
-  {/if}
 </div>
 
 <style>
-  :global(.status-chip) {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border-radius: 999px;
-    padding: 5px 9px;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1;
-    white-space: nowrap;
+  .landing {
+    color: #172238;
+    background: #f6f8fb;
   }
-  :global(.status-chip::before) {
-    content: '';
+  .wrap {
+    width: calc(100% - 64px);
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 88px;
+    gap: 24px;
+  }
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  nav a {
+    color: #445269;
+  }
+  nav a:hover,
+  .text-link:hover {
+    color: #2454d6;
+  }
+  .nav-app {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid #ccd5e3;
+    padding: 11px 17px;
+    border-radius: 8px;
+    background: white;
+  }
+  .hero {
+    border-bottom: 1px solid #e2e7ef;
+  }
+  .hero-inner {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    align-items: center;
+    gap: 64px;
+    padding-top: 80px;
+    padding-bottom: 94px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #2454d6;
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: clamp(40px, 4.6vw, 64px);
+    font-weight: 650;
+    letter-spacing: -0.025em;
+    line-height: 1.08;
+    margin-top: 22px;
+  }
+  h1 span {
+    color: #2454d6;
+  }
+  .hero-description {
+    font-size: 17px;
+    color: #596579;
+    line-height: 1.75;
+    max-width: 490px;
+    margin-top: 26px;
+  }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 22px;
+    margin-top: 30px;
+  }
+  .text-link {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .wallet-support {
+    font-size: 12px;
+    color: #596579;
+    margin-top: 24px;
+  }
+  .environment {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #596579;
+    margin-top: 7px;
+  }
+  .environment span {
+    color: #8793a6;
+  }
+  .product-example {
+    min-width: 0;
+  }
+  figcaption {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #657288;
+    font-size: 11px;
+    margin: 0 0 13px 4px;
+  }
+  .example-dot {
     width: 5px;
     height: 5px;
-    border-radius: 999px;
-    background: currentColor;
+    background: #8793a6;
+    border-radius: 50%;
   }
-  :global(.status-success) {
-    color: #2b8c67;
-    background: #eaf8f1;
+  .example-sheet {
+    background: white;
+    border: 1px solid #dbe3ef;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 24px 60px -24px #17223824;
   }
-  :global(.status-warning) {
-    color: #a86b13;
-    background: #fff6e6;
+  .example-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #596579;
+    font-size: 10px;
+    letter-spacing: 0.08em;
   }
-  :global(.status-info) {
-    color: #4567b7;
-    background: #eef2ff;
+  .example-top > span:first-child {
+    display: flex;
+    align-items: center;
+    gap: 9px;
   }
-  :global(.status-neutral) {
-    color: #68768b;
-    background: #eff2f6;
+  .reference {
+    font-family: var(--font-mono);
+    letter-spacing: 0;
+    color: #596579;
+  }
+  .example-requester {
+    margin-top: 31px;
+    font-size: 12px;
+    color: #596579;
+  }
+  .example-sheet h2 {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-top: 6px;
+  }
+  .example-amount {
+    font-size: 48px;
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    font-variant-numeric: tabular-nums;
+    margin-top: 19px;
+  }
+  .example-amount span {
+    font-size: 16px;
+    letter-spacing: 0;
+    font-weight: 500;
+    color: #596579;
+  }
+  .example-divider {
+    height: 1px;
+    background: #e8edf4;
+    margin: 27px 0 23px;
+  }
+  .matched-transfer {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+  .match-icon {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e9f6ef;
+    color: #237453;
+    flex-shrink: 0;
+  }
+  .matched-transfer > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .matched-transfer strong {
+    font-size: 13px;
+    font-weight: 650;
+  }
+  .matched-transfer div > span {
+    font-size: 11px;
+    color: #596579;
+  }
+  .transfer-amount {
+    margin-left: auto;
+    color: #237453;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .transfer-amount small {
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .remaining {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    margin-top: 31px;
+  }
+  .remaining span {
+    color: #596579;
+  }
+  .remaining strong {
+    font-weight: 600;
+  }
+  .example-progress {
+    height: 4px;
+    background: #edf1f7;
+    border-radius: 5px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .example-progress span {
+    display: block;
+    height: 100%;
+    width: 33.333%;
+    background: #2454d6;
+  }
+  .example-bottom {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 10px;
+    color: #596579;
+    margin-top: 10px;
+  }
+  .example-footnote {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+    color: #596579;
+    font-size: 12px;
+  }
+  .example-footnote :global(svg) {
+    color: #2454d6;
+  }
+  .workflow {
+    padding-top: 85px;
+    padding-bottom: 90px;
+    scroll-margin-top: 24px;
+  }
+  .section-heading h2,
+  .clarity h2,
+  .closing h2 {
+    font-size: clamp(28px, 3.2vw, 40px);
+    font-weight: 600;
+    line-height: 1.18;
+    letter-spacing: -0.015em;
+    margin-top: 14px;
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 48px;
+    margin-top: 48px;
+  }
+  .step-number {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #2454d6;
+    font-size: 12px;
+    font-weight: 650;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #d6dfed;
+  }
+  .steps h3 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 23px 0 12px;
+  }
+  .steps p,
+  .benefits p {
+    font-size: 15px;
+    line-height: 1.75;
+    color: #596579;
+  }
+  .clarity-band {
+    background: #eef2f8;
+    border-top: 1px solid #e2e7ef;
+    border-bottom: 1px solid #e2e7ef;
+  }
+  .clarity {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 100px;
+    padding-top: 80px;
+    padding-bottom: 80px;
+  }
+  .clarity-intro {
+    max-width: 390px;
+    margin-top: 22px;
+    font-size: 16px;
+    line-height: 1.75;
+    color: #596579;
+  }
+  .benefits {
+    display: grid;
+    gap: 30px;
+  }
+  .benefits article {
+    display: flex;
+    gap: 18px;
+  }
+  .benefits :global(svg) {
+    flex-shrink: 0;
+    margin-top: 3px;
+    color: #2454d6;
+  }
+  .benefits h3 {
+    font-size: 17px;
+    font-weight: 650;
+    margin-bottom: 7px;
+  }
+  .faq {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: 80px;
+    padding-top: 90px;
+    padding-bottom: 85px;
+  }
+  .faq-list {
+    border-bottom: 1px solid #e2e7ef;
+  }
+  .closing {
+    border-top: 1px solid #dbe3ef;
+    padding-top: 55px;
+    padding-bottom: 55px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 28px;
+  }
+  .closing h2 {
+    font-size: 32px;
+  }
+  .developer-note {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    color: #596579;
+    padding-bottom: 55px;
+  }
+  .developer-note a {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #2454d6;
+    font-weight: 600;
+  }
+  .site-footer {
+    border-top: 1px solid #e2e7ef;
+    padding-top: 26px;
+    padding-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    font-size: 12px;
+    color: #596579;
+  }
+  .site-footer > a {
+    margin-left: auto;
+  }
+  .site-footer :global(.brand) {
+    font-size: 14px;
+  }
+  .site-footer :global(.brand-mark) {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+  @media (max-width: 1000px) {
+    .hero-inner {
+      gap: 32px;
+      padding-top: 52px;
+      padding-bottom: 64px;
+    }
+    .example-sheet {
+      padding: 24px;
+    }
+    .hero-actions {
+      gap: 17px;
+    }
+    .clarity {
+      gap: 55px;
+    }
+    .faq {
+      gap: 45px;
+    }
+    .steps {
+      gap: 28px;
+    }
+  }
+  @media (max-width: 760px) {
+    .wrap {
+      width: calc(100% - 40px);
+    }
+    .site-header {
+      height: 76px;
+      gap: 14px;
+    }
+    nav {
+      gap: 16px;
+      font-size: 13px;
+    }
+    .desktop-link {
+      display: none;
+    }
+    .nav-app {
+      gap: 6px;
+      padding: 9px 12px;
+    }
+    .hero-inner {
+      grid-template-columns: 1fr;
+      gap: 42px;
+      padding-top: 40px;
+      padding-bottom: 50px;
+    }
+    h1 {
+      font-size: clamp(39px, 7vw, 54px);
+    }
+    .hero-description {
+      font-size: 16px;
+    }
+    .product-example {
+      width: 100%;
+      max-width: 480px;
+      justify-self: center;
+    }
+    .workflow {
+      padding: 55px 0;
+    }
+    .steps {
+      grid-template-columns: 1fr;
+      gap: 28px;
+      margin-top: 30px;
+    }
+    .steps h3 {
+      margin: 15px 0 8px;
+    }
+    .clarity {
+      grid-template-columns: 1fr;
+      gap: 36px;
+      padding: 55px 0;
+    }
+    .faq {
+      grid-template-columns: 1fr;
+      gap: 32px;
+      padding: 55px 0;
+    }
+    .closing {
+      align-items: flex-start;
+      flex-direction: column;
+      padding: 40px 0;
+    }
+    .developer-note {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 7px;
+      padding-bottom: 40px;
+    }
+    .site-footer {
+      flex-wrap: wrap;
+      gap: 18px;
+    }
+    .site-footer > span {
+      display: none;
+    }
+  }
+  @media (max-width: 380px) {
+    .site-header :global(.brand) {
+      font-size: 14px;
+      gap: 8px;
+    }
+    .site-header :global(.brand-mark) {
+      width: 32px;
+      height: 32px;
+    }
+    nav {
+      gap: 11px;
+    }
+    .example-sheet {
+      padding: 20px;
+    }
+    .example-bottom {
+      font-size: 9px;
+    }
   }
 </style>

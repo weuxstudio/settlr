@@ -20,6 +20,10 @@ export const paymentRequests = sqliteTable(
     ownerAddress: text('owner_address').notNull(),
     recipientAddress: text('recipient_address').notNull(),
     title: text('title').notNull(),
+    publicDescription: text('public_description').notNull().default(''),
+    requesterName: text('requester_name').notNull().default(''),
+    publicReference: text('public_reference').notNull().default(''),
+    dueDate: text('due_date'),
     amountMicroUsdc: text('amount_micro_usdc').notNull(),
     createdAt: text('created_at').notNull(),
     closedAt: text('closed_at')

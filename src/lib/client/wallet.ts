@@ -18,6 +18,13 @@ type Eip6963Announcement = {
   provider?: Eip1193Provider;
 };
 
+export type PaymentWalletPreview = {
+  address: string;
+  balanceMicroUsdc: string;
+  estimatedFeeMicroUsdc: string;
+  hasSufficientBalance: boolean;
+};
+
 declare global {
   interface Window {
     ethereum?: Eip1193Provider;
@@ -102,7 +109,10 @@ export async function switchWalletAccount() {
   return connectWallet();
 }
 
-export async function signInWithEthereum(address: string) {
+export async function signInWithEthereum(
+  address: string,
+  onPhase?: (phase: 'signature' | 'verifying') => void
+) {
   const provider = await resolveProvider();
   if (!provider) throw missingProviderError();
 
@@ -120,6 +130,7 @@ export async function signInWithEthereum(address: string) {
     throw new Error(challenge.error ?? 'Could not prepare the wallet sign in.');
   }
 
+  onPhase?.('signature');
   let signature: string;
   try {
     signature = (await provider.request({
@@ -129,6 +140,7 @@ export async function signInWithEthereum(address: string) {
   } catch (error) {
     throw walletError(error, 'Wallet sign in was declined.');
   }
+  onPhase?.('verifying');
   const verifyResponse = await fetch('/api/auth/verify', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -147,9 +159,16 @@ export async function signInWithEthereum(address: string) {
   return address;
 }
 
-export async function switchToArc() {
+export async function switchToArc(onSwitch?: () => void) {
   const provider = await resolveProvider();
   if (!provider) throw missingProviderError();
+  const currentChain = await provider.request({ method: 'eth_chainId' });
+  if (
+    typeof currentChain === 'string' &&
+    Number.parseInt(currentChain, 16) === ARC_CHAIN_ID
+  )
+    return;
+  onSwitch?.();
   try {
     await provider.request({
       method: 'wallet_switchEthereumChain',
@@ -174,6 +193,23 @@ export async function switchToArc() {
 }
 
 export async function sendMemoPayment(
+  recipient: `0x${string}`,
+  amount: bigint,
+  memoId: `0x${string}`
+) {
+  const { provider, tx, balance, nativeBalance, feeWei } =
+    await prepareMemoPayment(recipient, amount, memoId);
+  if (balance < amount)
+    throw new Error('Insufficient USDC balance for this payment.');
+  if (nativeBalance < amount * 1_000_000_000_000n + feeWei)
+    throw new Error('Insufficient USDC balance including the network fee.');
+  return (await provider.request({
+    method: 'eth_sendTransaction',
+    params: [tx]
+  })) as string;
+}
+
+async function prepareMemoPayment(
   recipient: `0x${string}`,
   amount: bigint,
   memoId: `0x${string}`
@@ -226,18 +262,38 @@ export async function sendMemoPayment(
       params: [{ to: ARC_USDC_ADDRESS, data: balanceData }, 'latest']
     })) as string
   );
-  if (balance < amount)
-    throw new Error('Insufficient USDC balance for this payment.');
   const nativeBalance = BigInt(
     (await provider.request({
       method: 'eth_getBalance',
       params: [sender, 'latest']
     })) as string
   );
-  if (nativeBalance < amount * 1_000_000_000_000n + estimatedGas * gasPrice)
-    throw new Error('Insufficient USDC balance including the network fee.');
-  return (await provider.request({
-    method: 'eth_sendTransaction',
-    params: [tx]
-  })) as string;
+  return {
+    provider,
+    sender,
+    tx,
+    balance,
+    nativeBalance,
+    feeWei: estimatedGas * gasPrice
+  };
+}
+
+export async function inspectMemoPayment(
+  recipient: `0x${string}`,
+  amount: bigint,
+  memoId: `0x${string}`
+): Promise<PaymentWalletPreview> {
+  const { sender, balance, nativeBalance, feeWei } = await prepareMemoPayment(
+    recipient,
+    amount,
+    memoId
+  );
+  const feeMicroUsdc = (feeWei + 1_000_000_000_000n - 1n) / 1_000_000_000_000n;
+  return {
+    address: sender,
+    balanceMicroUsdc: balance.toString(),
+    estimatedFeeMicroUsdc: feeMicroUsdc.toString(),
+    hasSufficientBalance:
+      balance >= amount && nativeBalance >= amount * 1_000_000_000_000n + feeWei
+  };
 }

@@ -153,7 +153,7 @@ export async function POST({ params, request, platform, url }) {
 
   const client = createPublicClient({
     chain: ARC_CHAIN,
-    transport: http(ARC_RPC_URL)
+    transport: http(ARC_RPC_URL, { timeout: 10_000, retryCount: 1 })
   });
   let receipt;
   let transaction;

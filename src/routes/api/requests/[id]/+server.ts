@@ -6,6 +6,14 @@ import { isSameOrigin, readJson } from '$lib/server/request';
 
 const updateSchema = z.object({
   title: z.string().trim().min(1).max(80).optional(),
+  publicDescription: z.string().trim().min(1).max(160).optional(),
+  requesterName: z.string().trim().min(2).max(60).optional(),
+  publicReference: z.string().trim().max(80).optional(),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional()
+    .or(z.literal('')),
   closed: z.boolean().optional()
 });
 
@@ -83,6 +91,18 @@ export async function PATCH({ params, request, cookies, platform, url }) {
       session.address,
       {
         ...(parsed.data.title ? { title: parsed.data.title } : {}),
+        ...(parsed.data.publicDescription
+          ? { publicDescription: parsed.data.publicDescription }
+          : {}),
+        ...(parsed.data.requesterName
+          ? { requesterName: parsed.data.requesterName }
+          : {}),
+        ...(parsed.data.publicReference !== undefined
+          ? { publicReference: parsed.data.publicReference }
+          : {}),
+        ...(parsed.data.dueDate !== undefined
+          ? { dueDate: parsed.data.dueDate }
+          : {}),
         ...(parsed.data.closed ? { closedAt: new Date().toISOString() } : {})
       }
     );

@@ -21,6 +21,14 @@ export type PaymentRequest = {
   memoId: string;
   owner?: string;
   title: string;
+  /** Public purpose shown to the payer. The private work label remains title. */
+  publicDescription?: string;
+  /** Public requester name shown to the payer. */
+  requesterName?: string;
+  /** Optional payer-facing invoice or order reference. */
+  publicReference?: string;
+  /** Optional ISO date defining when the request is due. */
+  dueDate?: string;
   amountMicroUsdc?: string;
   paidMicroUsdc?: string;
   remainingMicroUsdc?: string;

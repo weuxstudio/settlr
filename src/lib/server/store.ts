@@ -12,6 +12,10 @@ type RequestRow = {
   owner_address: string;
   recipient_address: string;
   title: string;
+  public_description: string | null;
+  requester_name: string | null;
+  public_reference: string | null;
+  due_date: string | null;
   amount_micro_usdc: string;
   created_at: string;
   closed_at: string | null;
@@ -111,6 +115,10 @@ async function requestFromRow(
       memoId: row.memo_id,
       owner: row.owner_address,
       title: row.title,
+      publicDescription: row.public_description ?? '',
+      requesterName: row.requester_name ?? '',
+      publicReference: row.public_reference ?? '',
+      dueDate: row.due_date || undefined,
       amount: formatUsdcBaseUnits(row.amount_micro_usdc),
       paid: formatUsdcBaseUnits(paid),
       recipient: row.recipient_address,
@@ -220,8 +228,8 @@ export async function saveRequest(db: StoreDatabase, request: PaymentRequest) {
   await db
     .prepare(
       `INSERT INTO payment_requests
-    (id, token, memo_id, owner_address, recipient_address, title, amount_micro_usdc, created_at, closed_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    (id, token, memo_id, owner_address, recipient_address, title, public_description, requester_name, public_reference, due_date, amount_micro_usdc, created_at, closed_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .bind(
       item.id,
@@ -230,6 +238,10 @@ export async function saveRequest(db: StoreDatabase, request: PaymentRequest) {
       normalizedOwner,
       item.recipient,
       item.title,
+      item.publicDescription ?? '',
+      item.requesterName ?? '',
+      item.publicReference ?? '',
+      item.dueDate ?? null,
       amountMicroUsdc,
       item.createdAt,
       item.closedAt ?? null
@@ -253,13 +265,25 @@ export async function updateRequest(
     memoryRequests.set(id, next);
     return next;
   }
-  if (update.title !== undefined || update.closedAt !== undefined) {
+  if (
+    update.title !== undefined ||
+    update.publicDescription !== undefined ||
+    update.requesterName !== undefined ||
+    update.publicReference !== undefined ||
+    update.dueDate !== undefined ||
+    update.closedAt !== undefined
+  ) {
     await db
       .prepare(
-        'UPDATE payment_requests SET title = COALESCE(?, title), closed_at = COALESCE(?, closed_at) WHERE id = ? AND owner_address = ?'
+        'UPDATE payment_requests SET title = COALESCE(?, title), public_description = COALESCE(?, public_description), requester_name = COALESCE(?, requester_name), public_reference = COALESCE(?, public_reference), due_date = CASE WHEN ? = 1 THEN ? ELSE due_date END, closed_at = COALESCE(?, closed_at) WHERE id = ? AND owner_address = ?'
       )
       .bind(
         update.title ?? null,
+        update.publicDescription ?? null,
+        update.requesterName ?? null,
+        update.publicReference ?? null,
+        update.dueDate !== undefined ? 1 : 0,
+        update.dueDate || null,
         update.closedAt ?? null,
         id,
         owner.toLowerCase()
