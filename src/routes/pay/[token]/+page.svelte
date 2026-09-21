@@ -389,6 +389,29 @@
     verificationState = 'pending';
     for (let attempt = 0; attempt < 60; attempt += 1) {
       try {
+        // A delayed receipt can become available after the initial POST. Re-submit
+        // at 15s, 30s and 60s so the browser can recover without a reload.
+        if (attempt === 4 || attempt === 10 || attempt === 20) {
+          const retryResponse = await fetchWithTimeout(
+            `/api/pay/${request?.token}/verify`,
+            {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ transactionHash: hash })
+            },
+            12_000
+          );
+          if (retryResponse.ok && retryResponse.status !== 202) {
+            await finishVerification(hash);
+            return;
+          }
+          if (retryResponse.status === 422) {
+            verificationState = 'rejected';
+            message =
+              'The transaction could not be matched to this payment request.';
+            return;
+          }
+        }
         if (await refreshRequest(hash)) {
           await finishVerification(hash, false);
           return;
