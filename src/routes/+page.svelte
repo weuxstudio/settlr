@@ -197,7 +197,7 @@
             <div class="preview-activity"><div><h3>Settlement activity</h3><p>The latest verified payment events.</p></div><span class="activity-spark">⌁</span>{#each previewPayments as { request, payment } (payment.id)}<div class="activity-row"><span class="match-check"><Check size={12} /></span><span><strong>{request.title}</strong><small>{previewDate(payment.receivedAt)} · {shortAddress(payment.payer)} · <a href={payment.explorerUrl} target="_blank" rel="noreferrer">Arc transaction ↗</a></small></span><b>+{payment.amount} USDC</b></div>{/each}</div>
           </div>
         </figure>
-        <span class="illustrative-label">Interface preview, values from the two verified Arc mainnet settlements</span>
+        <span class="illustrative-label">Interface preview, values from the three verified Arc mainnet settlements</span>
       </div>
     </section>
 

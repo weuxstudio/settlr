@@ -1,17 +1,52 @@
 // Sample workspace shown by the interface while no wallet is connected.
 //
-// The two payment records below are real Arc mainnet settlements, not mock ups:
-//   block 21995547, 2026 09 21 10:34 UTC, 3.50 USDC, full settlement
+// Every payment record below is a real Arc mainnet settlement:
+//   block 21995547, 2026 09 21 10:34:28 UTC, 3.50 USDC, full settlement, memo tag memomatch:v1
 //     https://explorer.arc.io/tx/0x783440022c6c7d437ec9ed11ca2f3a81006b89062de15bfd71d2521173d340aa
-//   block 21996007, 2026 09 21 10:38 UTC, 2.22 USDC, part payment
+//   block 21996007, 2026 09 21 10:38:21 UTC, 2.22 USDC, part payment, memo tag memomatch:v1
 //     https://explorer.arc.io/tx/0xf9cb51fe20c32f02f2a10ef1f9a1ac984e83350e2c88c65d258a032656ef0f03
+//   block 22005266, 2026 09 21 11:56:38 UTC, 1.50 USDC, full settlement, memo tag settlr:v1
+//     https://explorer.arc.io/tx/0xaedc5b0392164cd655be7aa2d0785e8d0cc67bd4aba5a9cf69b456b6bac873b2
 //
-// Both carry a memo reference to the Arc Memo contract and are verified by the
-// same module the running app uses. The remaining requests stay open and carry
-// no payment record.
+// All three carry a memo reference to the Arc Memo contract and were verified by
+// the same module the running app uses. Payment times and on chain values are
+// taken from those transactions. The creation times of the two older requests
+// are placeholders, the creation time of the Willow Labs request is the real one.
+// Requests without a payment record stay open and claim nothing.
+import { deriveStatus } from '$core/index';
+import { formatUsdcBaseUnits, parseUsdc } from '$lib/format';
 import type { DashboardStats, PaymentRequest } from './types';
 
 export const demoRequests: PaymentRequest[] = [
+  {
+    id: 'req_7d2f10',
+    token: 'pay_demo_7d2f10',
+    memoId:
+      '0x931a757b660c147089ce4f69672c7c59039c977ca769d856d5eeb9f7a7da082d',
+    title: 'Website Design',
+    publicDescription: 'Website Design',
+    requesterName: 'Willow Labs',
+    publicReference: 'INV-2026-09-002',
+    amount: '1.50',
+    paid: '1.50',
+    recipient: '0x0053f2e91ab1c70f72048e6e27ba884156dc0298',
+    createdAt: '2026-09-21T11:55:53.000Z',
+    payments: [
+      {
+        id: 'payment_3',
+        amount: '1.50',
+        payer: '0xe0a52194a79da1c44ed14167c2ee0b8f934dd13c',
+        transactionHash:
+          '0xaedc5b0392164cd655be7aa2d0785e8d0cc67bd4aba5a9cf69b456b6bac873b2',
+        logIndex: 8,
+        blockNumber: 22005266,
+        receivedAt: '2026-09-21T11:56:38.000Z',
+        explorerUrl:
+          'https://explorer.arc.io/tx/0xaedc5b0392164cd655be7aa2d0785e8d0cc67bd4aba5a9cf69b456b6bac873b2',
+        verification: 'verified'
+      }
+    ]
+  },
   {
     id: 'req_8f3a1d',
     token: 'pay_demo_8f3a1d',
@@ -34,7 +69,7 @@ export const demoRequests: PaymentRequest[] = [
         transactionHash:
           '0x783440022c6c7d437ec9ed11ca2f3a81006b89062de15bfd71d2521173d340aa',
         blockNumber: 21995547,
-        receivedAt: '2026-09-21T10:34:00.000Z',
+        receivedAt: '2026-09-21T10:34:28.000Z',
         explorerUrl:
           'https://explorer.arc.io/tx/0x783440022c6c7d437ec9ed11ca2f3a81006b89062de15bfd71d2521173d340aa',
         verification: 'verified'
@@ -63,7 +98,7 @@ export const demoRequests: PaymentRequest[] = [
         transactionHash:
           '0xf9cb51fe20c32f02f2a10ef1f9a1ac984e83350e2c88c65d258a032656ef0f03',
         blockNumber: 21996007,
-        receivedAt: '2026-09-21T10:38:00.000Z',
+        receivedAt: '2026-09-21T10:38:21.000Z',
         explorerUrl:
           'https://explorer.arc.io/tx/0xf9cb51fe20c32f02f2a10ef1f9a1ac984e83350e2c88c65d258a032656ef0f03',
         verification: 'verified'
@@ -104,9 +139,50 @@ export const demoRequests: PaymentRequest[] = [
   }
 ];
 
-export const demoStats: DashboardStats = {
-  outstanding: '39.78',
-  collected: '5.72',
-  paidCount: 1,
-  averageSettlement: '14m'
-};
+/**
+ * The headline figures are derived from the requests above, so the preview can
+ * never show a total that contradicts the payment records it lists.
+ */
+function summarize(requests: PaymentRequest[]): DashboardStats {
+  let collected = 0n;
+  let outstanding = 0n;
+  let paidCount = 0;
+  const settlementMinutes: number[] = [];
+
+  for (const request of requests) {
+    const amount = parseUsdc(request.amount);
+    const paid = parseUsdc(request.paid);
+    collected += paid;
+    if (amount > paid) outstanding += amount - paid;
+    const status = deriveStatus(amount, paid);
+    if (status === 'Paid' || status === 'Overpaid') paidCount += 1;
+    const latest = request.payments[request.payments.length - 1];
+    if (latest) {
+      const minutes =
+        (new Date(latest.receivedAt).getTime() -
+          new Date(request.createdAt).getTime()) /
+        60_000;
+      if (Number.isFinite(minutes) && minutes >= 0)
+        settlementMinutes.push(minutes);
+    }
+  }
+
+  const average = settlementMinutes.length
+    ? Math.max(
+        1,
+        Math.round(
+          settlementMinutes.reduce((total, value) => total + value, 0) /
+            settlementMinutes.length
+        )
+      )
+    : 0;
+
+  return {
+    outstanding: formatUsdcBaseUnits(outstanding),
+    collected: formatUsdcBaseUnits(collected),
+    paidCount,
+    averageSettlement: average ? `${average}m` : 'No settlements yet'
+  };
+}
+
+export const demoStats: DashboardStats = summarize(demoRequests);
