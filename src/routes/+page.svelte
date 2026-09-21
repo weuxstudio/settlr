@@ -7,7 +7,6 @@
     ArrowUpRight,
     Check,
     CheckCircle2,
-    CircleDollarSign,
     Code2,
     ExternalLink,
     FilePlus2,
@@ -128,69 +127,28 @@
         <div class="stage-orbit orbit-two"></div>
         <figure class="workspace-preview">
           <figcaption>
-            <span class="preview-brand"
-              ><span class="mini-mark"><LogoMark /></span> Settlr</span
-            >
-            <span class="preview-wallet"><span></span>0xe0a5…d13c</span>
+            <span class="preview-brand"><span class="mini-mark"><LogoMark /></span> Settlr</span>
+            <nav class="preview-nav" aria-label="Illustrative workspace navigation"><span class="active">Requests</span><span>Activity</span><span>Documentation</span></nav>
+            <span class="preview-actions"><span class="preview-network"><span></span>Arc mainnet</span><span class="preview-wallet"><span></span>0xe005…0298 <span class="chevron">⌄</span></span></span>
           </figcaption>
-          <div class="preview-layout">
-            <aside aria-hidden="true">
-              <strong>Workspace</strong>
-              <span class="active"><CircleDollarSign size={13} />Overview</span>
-              <span><Link2 size={13} />Requests</span>
-              <span><ReceiptText size={13} />Activity</span>
-            </aside>
-            <div class="preview-main">
-              <div class="preview-heading">
-                <div>
-                  <small>PAYMENT OVERVIEW</small>
-                  <h2>Track every settlement.</h2>
-                </div>
-                <span class="new-request"
-                  ><FilePlus2 size={13} />New request</span
-                >
-              </div>
-              <div class="preview-metrics">
-                <div>
-                  <small>Outstanding</small><strong
-                    >80.00 <span>USDC</span></strong
-                  >
-                </div>
-                <div>
-                  <small>Collected</small><strong
-                    >40.00 <span>USDC</span></strong
-                  >
-                </div>
-                <div>
-                  <small>Settled</small><strong>0 <span>of 1</span></strong>
-                </div>
-              </div>
-              <div class="preview-table">
-                <div class="table-label">
-                  <span>PAYMENT REQUEST</span><span>AMOUNT</span><span
-                    >STATUS</span
-                  >
-                </div>
-                <div class="table-row">
-                  <span class="request-cell"
-                    ><span class="request-icon"><Link2 size={13} /></span><span
-                      ><strong>Website audit</strong><small>INV-001</small
-                      ></span
-                    ></span
-                  >
-                  <strong>120.00 <small>USDC</small></strong><span
-                    class="status-partial">Partially paid</span
-                  >
-                </div>
-              </div>
-              <div class="matched-note">
-                <span class="match-check"><Check size={14} /></span><span
-                  ><strong>Payment matched</strong><small
-                    >40.00 USDC assigned to INV-001</small
-                  ></span
-                ><CheckCircle2 size={18} />
-              </div>
+          <div class="preview-main">
+            <div class="preview-heading"><div><h2>Payment overview</h2><p>Track payment requests and verified USDC settlements on Arc.</p></div><span class="new-request"><FilePlus2 size={13} />New request</span></div>
+            <div class="preview-metrics">
+              <div><small>Outstanding</small><strong>0.00 <span>USDC</span></strong><em>Awaiting settlement</em></div>
+              <div><small>Collected</small><strong>3.50 <span>USDC</span></strong><em class="verified">✓ Verified on Arc</em></div>
+              <div><small>Settled requests</small><strong>1 <span>of 4</span></strong><em>This workspace</em></div>
+              <div><small>Avg. settlement</small><strong>3m</strong><em>From request to final</em></div>
             </div>
+            <div class="preview-refresh"><span><i></i>Arc mainnet</span><span>Data refreshed just now</span></div>
+            <div class="preview-list-heading"><div><h3>Payment requests</h3><p>Review balances, due dates and settlement progress.</p></div><span class="preview-tools">⌕ Search&nbsp;&nbsp; <b>All⌄</b> <b>⇩ CSV</b></span></div>
+            <div class="preview-table">
+              <div class="table-label"><span>REQUEST</span><span>REQUESTED</span><span>RECEIVED</span><span>STATUS</span><span>DUE</span></div>
+              <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>Website audit, Sept. 2026</strong><small>Reference INV-2026-26-005</small></span></span><strong>3.50 <small>USDC</small></strong><strong>3.50 <small>USDC</small></strong><span class="status-paid">● Paid</span><span class="due">Oct 1</span></div>
+              <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>Arc integration sprint</strong><small>Reference INV-2026-26-004</small></span></span><strong>12.00 <small>USDC</small></strong><strong>7.00 <small>USDC</small></strong><span class="status-partial">● Partially paid</span><span class="due">Sep 28</span></div>
+              <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>Design system review</strong><small>Reference INV-2026-26-003</small></span></span><strong>8.00 <small>USDC</small></strong><strong>0.00 <small>USDC</small></strong><span class="status-open">● Open</span><span class="due">Sep 30</span></div>
+              <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>Mainnet workshop</strong><small>Reference INV-2026-26-002</small></span></span><strong>24.00 <small>USDC</small></strong><strong>24.00 <small>USDC</small></strong><span class="status-paid">● Paid</span><span class="due">Sep 22</span></div>
+            </div>
+            <div class="preview-activity"><div><h3>Settlement activity</h3><p>The latest verified payment events.</p></div><span class="activity-spark">⌁</span><div class="activity-row"><span class="match-check"><Check size={12} /></span><span><strong>Website audit, Sept. 2026</strong><small>Sep 21, 2026 · 0xe0a5…d13c · Arc transaction ↗</small></span><b>+3.50 USDC</b></div></div>
           </div>
         </figure>
         <span class="illustrative-label">Illustrative product view</span>
@@ -725,42 +683,50 @@
     border-radius: 50%;
     background: #2c9b70;
   }
-  .preview-layout {
-    display: grid;
-    grid-template-columns: 155px 1fr;
-    min-height: 330px;
-  }
-  .preview-layout aside {
-    padding: 24px 15px;
-    border-right: 1px solid #e8edf4;
-    background: #fbfcfe;
-  }
-  .preview-layout aside strong {
-    display: block;
-    margin: 0 9px 12px;
-    color: #8a96a8;
-    font-size: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-  }
-  .preview-layout aside > span {
+  .preview-actions,
+  .preview-nav {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
-    padding: 8px 9px;
-    color: #657288;
-    border-radius: 6px;
-    font-size: 10px;
   }
-  .preview-layout aside .active {
-    color: #2454d6;
-    background: #eaf0ff;
+  .preview-actions {
+    gap: 8px;
+  }
+  .preview-nav {
+    gap: 20px;
+    margin-left: auto;
+    margin-right: 20px;
+    color: #66748a;
+    font-size: 9px;
+  }
+  .preview-nav .active {
+    color: #172238;
     font-weight: 700;
+  }
+  .preview-network,
+  .preview-wallet {
+    min-height: 24px;
+    padding: 0 8px;
+    border: 1px solid #dce4ef;
+    border-radius: 6px;
+    font-size: 8px;
+  }
+  .preview-network {
+    color: #52627a;
+  }
+  .preview-network > span,
+  .preview-wallet > span:first-child {
+    width: 5px;
+    height: 5px;
+  }
+  .preview-wallet .chevron {
+    width: auto;
+    height: auto;
+    color: #728097;
+    background: none;
   }
   .preview-main {
     min-width: 0;
-    padding: 27px 31px;
+    padding: 24px 29px 26px;
   }
   .preview-heading {
     display: flex;
@@ -768,15 +734,15 @@
     align-items: flex-end;
     gap: 15px;
   }
-  .preview-heading small {
-    color: #2454d6;
+  .preview-heading p,
+  .preview-list-heading p,
+  .preview-activity p {
+    margin-top: 4px;
+    color: #7a8799;
     font-size: 8px;
-    font-weight: 700;
-    letter-spacing: 0.11em;
   }
   .preview-heading h2 {
-    margin-top: 5px;
-    font-size: 22px;
+    font-size: 19px;
     font-weight: 650;
     letter-spacing: -0.015em;
   }
@@ -793,8 +759,8 @@
   }
   .preview-metrics {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    margin-top: 24px;
+    grid-template-columns: repeat(4, 1fr);
+    margin-top: 19px;
     padding: 15px 0;
     border: 1px solid #e4e9f1;
     border-radius: 8px;
@@ -823,6 +789,60 @@
     font-size: 8px;
     font-weight: 500;
   }
+  .preview-metrics em {
+    display: block;
+    margin-top: 4px;
+    color: #8995a7;
+    font-size: 7px;
+    font-style: normal;
+  }
+  .preview-metrics em.verified {
+    color: #2c9b70;
+  }
+  .preview-refresh {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 2px 0;
+    color: #7a8799;
+    font-size: 7px;
+  }
+  .preview-refresh span:first-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #43846c;
+  }
+  .preview-refresh i {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #2c9b70;
+  }
+  .preview-list-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 19px;
+  }
+  .preview-list-heading h3,
+  .preview-activity h3 {
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .preview-tools {
+    color: #718096;
+    font-size: 8px;
+    white-space: nowrap;
+  }
+  .preview-tools b {
+    margin-left: 8px;
+    padding: 5px 7px;
+    border: 1px solid #dce4ef;
+    border-radius: 5px;
+    color: #5e6d83;
+    font-weight: 600;
+  }
   .preview-table {
     margin-top: 16px;
     overflow: hidden;
@@ -832,7 +852,7 @@
   .table-label,
   .table-row {
     display: grid;
-    grid-template-columns: 1fr 105px 105px;
+    grid-template-columns: minmax(210px, 1fr) 78px 78px 102px 54px;
     align-items: center;
     gap: 14px;
     padding: 10px 14px;
@@ -881,32 +901,68 @@
     font-size: 8px;
     font-weight: 700;
   }
-  .matched-note {
+  .status-paid,
+  .status-open {
+    justify-self: start;
+    padding: 4px 7px;
+    border-radius: 999px;
+    font-size: 7px;
+    font-weight: 700;
+  }
+  .status-paid {
+    color: #237453;
+    background: #e3f6ed;
+  }
+  .status-open {
+    color: #617087;
+    background: #edf1f5;
+  }
+  .due {
+    color: #657288;
+    font-size: 8px;
+  }
+  .preview-activity {
+    position: relative;
+    margin-top: 17px;
+    padding: 13px 14px 12px;
+    border: 1px solid #e4e9f1;
+    border-radius: 8px;
+  }
+  .activity-spark {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    color: #2454d6;
+    background: #eef3ff;
+    font-size: 17px;
+  }
+  .activity-row {
     display: flex;
     align-items: center;
-    gap: 9px;
-    width: min(320px, 80%);
-    margin: 18px auto 0;
-    padding: 10px 12px;
-    border: 1px solid #cde8db;
-    border-radius: 8px;
-    background: #f1faf5;
+    gap: 8px;
+    margin-top: 13px;
   }
-  .matched-note > span:nth-child(2) {
+  .activity-row > span:nth-child(2) {
     display: flex;
     flex: 1;
     flex-direction: column;
     gap: 2px;
   }
-  .matched-note strong {
-    font-size: 9px;
-  }
-  .matched-note small {
-    color: #5d766a;
+  .activity-row strong,
+  .activity-row b {
     font-size: 8px;
   }
-  .matched-note > :global(svg) {
-    color: #2c9b70;
+  .activity-row small {
+    color: #7b889a;
+    font-size: 7px;
+  }
+  .activity-row b {
+    color: #27805d;
   }
   .match-check {
     display: grid;
@@ -1523,18 +1579,21 @@
     .workspace-preview {
       border-width: 6px;
     }
-    .preview-layout {
-      grid-template-columns: 1fr;
-      min-height: auto;
-    }
-    .preview-layout aside {
+    .preview-nav {
       display: none;
+    }
+    .preview-actions {
+      margin-left: auto;
     }
     .preview-main {
       padding: 21px 18px;
     }
     .preview-heading h2 {
       font-size: 17px;
+    }
+    .preview-heading p {
+      max-width: 210px;
+      line-height: 1.4;
     }
     .new-request {
       display: none;
@@ -1547,14 +1606,22 @@
     }
     .table-label,
     .table-row {
-      grid-template-columns: 1fr 78px;
+      grid-template-columns: minmax(150px, 1fr) 64px 64px;
     }
-    .table-label span:last-child,
-    .status-partial {
+    .table-label span:nth-child(4),
+    .table-label span:nth-child(5),
+    .table-row > :nth-child(4),
+    .table-row > :nth-child(5) {
       display: none;
     }
-    .matched-note {
-      width: 100%;
+    .preview-list-heading {
+      align-items: flex-start;
+    }
+    .preview-tools {
+      display: none;
+    }
+    .preview-activity {
+      display: none;
     }
     .process-section {
       padding: 70px 0;
