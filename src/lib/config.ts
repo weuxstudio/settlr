@@ -1,8 +1,9 @@
 import { arc, arcTestnet } from 'viem/chains';
+import { PUBLIC_ARC_NETWORK, PUBLIC_ARC_RPC_URL } from '$env/static/public';
 
 export type ArcEnvironment = 'testnet' | 'mainnet';
 export const ARC_ENVIRONMENT: ArcEnvironment =
-  (import.meta.env.PUBLIC_ARC_NETWORK ?? 'testnet') === 'mainnet'
+  (PUBLIC_ARC_NETWORK ?? 'testnet') === 'mainnet'
     ? 'mainnet'
     : 'testnet';
 export const ARC_CHAIN = ARC_ENVIRONMENT === 'mainnet' ? arc : arcTestnet;
@@ -12,7 +13,7 @@ export const ARC_EXPLORER_URL =
     ? 'https://explorer.arc.io'
     : 'https://explorer.testnet.arc.io';
 export const ARC_RPC_URL =
-  import.meta.env.PUBLIC_ARC_RPC_URL ??
+  PUBLIC_ARC_RPC_URL ??
   (ARC_ENVIRONMENT === 'mainnet'
     ? 'https://rpc.mainnet.arc.io'
     : 'https://rpc.testnet.arc.io');

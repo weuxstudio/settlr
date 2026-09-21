@@ -1,11 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "memomatch",
+  "name": "settlr",
   "main": ".svelte-kit/cloudflare/_worker.js",
   "compatibility_date": "2026-09-17",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "ARC_NETWORK": "mainnet",
+    "ARC_RPC_URL": "https://rpc.mainnet.arc.io",
     "PAYMENTS_ENABLED": "false"
   },
   "assets": {
@@ -15,8 +16,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "memomatch",
-      "database_id": "replace-with-cloudflare-d1-id",
+      "database_name": "settlr",
+      "database_id": "0c5ec2c9-2e8c-4bd8-ac38-0b3e7e86fdd7",
       "migrations_dir": "migrations"
     }
   ]

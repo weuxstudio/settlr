@@ -1,18 +1,19 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "memomatch-indexer",
+  "name": "settlr-indexer",
   "main": "workers/indexer.ts",
   "compatibility_date": "2026-09-17",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "ARC_START_BLOCK": "REPLACE_WITH_ARC_MEMO_START_BLOCK",
+    "ARC_RPC_URL": "https://rpc.mainnet.arc.io",
+    "ARC_START_BLOCK": "21991464",
     "ARC_NETWORK": "mainnet"
   },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "memomatch",
-      "database_id": "replace-with-cloudflare-d1-id",
+      "database_name": "settlr",
+      "database_id": "0c5ec2c9-2e8c-4bd8-ac38-0b3e7e86fdd7",
       "migrations_dir": "migrations"
     }
   ],
