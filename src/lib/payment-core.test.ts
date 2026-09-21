@@ -4,6 +4,8 @@ import {
   ARC_MEMO_ADDRESS,
   ARC_SYSTEM_USDC_EMITTER,
   ARC_USDC_ADDRESS,
+  LEGACY_MEMO_FORMAT,
+  MEMO_FORMAT,
   TRANSFER_TOPIC,
   dedupeKey,
   deriveStatus,
@@ -106,7 +108,7 @@ describe('Arc payment core', () => {
           }),
           data: encodeAbiParameters(
             [{ type: 'bytes32' }, { type: 'bytes' }, { type: 'uint256' }],
-            [keccak256(call.args[1]), toHex('memomatch:v1'), 0n]
+            [keccak256(call.args[1]), toHex(MEMO_FORMAT), 0n]
           ),
           logIndex: 1
         }
@@ -133,7 +135,12 @@ describe('Arc payment core', () => {
     const recipient =
       '0x3333333333333333333333333333333333333333' as `0x${string}`;
     const memoId = `0x${'bc'.repeat(32)}` as `0x${string}`;
-    const call = encodePaymentCall(recipient, 1_000_000n, memoId);
+    const call = encodePaymentCall(
+      recipient,
+      1_000_000n,
+      memoId,
+      toHex(LEGACY_MEMO_FORMAT)
+    );
     const input = encodeFunctionData({
       abi: call.abi,
       functionName: call.functionName,

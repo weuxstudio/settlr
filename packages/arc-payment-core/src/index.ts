@@ -19,6 +19,9 @@ export const ARC_USDC_ADDRESS =
   '0x3600000000000000000000000000000000000000' as Address;
 export const ARC_MEMO_ADDRESS =
   '0x5294E9927c3306DcBaDb03fe70b92e01cCede505' as Address;
+export const MEMO_FORMAT = 'settlr:v1' as const;
+export const LEGACY_MEMO_FORMAT = 'memomatch:v1' as const;
+export const SUPPORTED_MEMO_FORMATS = [MEMO_FORMAT, LEGACY_MEMO_FORMAT] as const;
 export const ARC_SYSTEM_USDC_EMITTER =
   '0xffffFFFfFFffffffffffffffFfFFFfffFFFfFFfE' as Address;
 export const TRANSFER_TOPIC =
@@ -86,7 +89,7 @@ export function makePaymentCall(recipient: Address, amount: bigint) {
     target: ARC_USDC_ADDRESS,
     data,
     memoId: makeMemoId(),
-    memoData: toHex('memomatch:v1')
+    memoData: toHex(MEMO_FORMAT)
   };
 }
 
@@ -94,7 +97,7 @@ export function encodePaymentCall(
   recipient: Address,
   amount: bigint,
   memoId: Hex,
-  memoData = toHex('memomatch:v1')
+  memoData = toHex(MEMO_FORMAT)
 ) {
   return {
     address: ARC_MEMO_ADDRESS,
@@ -213,7 +216,7 @@ export function verifyReceipt(
   } catch {
     return { ok: false, reason: 'Unsupported memo format' };
   }
-  if (memoFormat !== 'memomatch:v1') {
+  if (!(SUPPORTED_MEMO_FORMATS as readonly string[]).includes(memoFormat)) {
     return { ok: false, reason: 'Unsupported memo format' };
   }
   if (transaction.from.toLowerCase() === request.recipient.toLowerCase()) {

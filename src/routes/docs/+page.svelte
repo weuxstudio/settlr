@@ -98,7 +98,7 @@ const status = deriveStatus(
   const verificationSteps = [
     'Confirm the configured Arc network and a successful transaction receipt.',
     'Require a direct call to the approved Arc Memo contract.',
-    'Decode one supported USDC transfer and the memomatch:v1 format marker.',
+    'Decode one supported USDC transfer and the settlr:v1 format marker. Legacy memomatch:v1 receipts remain supported.',
     'Match the memo ID and the hash of the inner call data.',
     'Match transaction sender, memo sender and native transfer sender.',
     'Match recipient and amount against exactly one native transfer event.',
