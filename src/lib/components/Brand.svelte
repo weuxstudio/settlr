@@ -1,16 +1,10 @@
-<a href="/" class="brand" aria-label="MemoMatch home">
-  <span class="brand-mark"
-    ><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"
-      ><path
-        d="M5 17V7l4 5 3-4 3 4 4-5v10"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      /><circle cx="18.5" cy="6" r="1.5" fill="#8daeff" /></svg
-    ></span
-  >
-  <span>MemoMatch</span>
+<script lang="ts">
+  import LogoMark from '$lib/components/LogoMark.svelte';
+</script>
+
+<a href="/" class="brand" aria-label="Settlr home">
+  <span class="brand-mark"><LogoMark /></span>
+  <span>Settlr</span>
 </a>
 
 <style>
@@ -30,11 +24,7 @@
     width: 38px;
     height: 38px;
     border-radius: 11px;
-    background: #172238;
-    color: white;
-  }
-  svg {
-    width: 23px;
-    height: 23px;
+    overflow: hidden;
+    background: transparent;
   }
 </style>

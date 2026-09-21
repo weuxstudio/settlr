@@ -1,8 +1,10 @@
 import adapter from '@sveltejs/adapter-cloudflare';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
-const arcNetwork = process.env.PUBLIC_ARC_NETWORK === 'mainnet' ? 'mainnet' : 'testnet';
-const wranglerConfig = arcNetwork === 'mainnet' ? 'wrangler.jsonc' : 'wrangler.testnet.jsonc';
+const arcNetwork =
+  process.env.PUBLIC_ARC_NETWORK === 'mainnet' ? 'mainnet' : 'testnet';
+const wranglerConfig =
+  arcNetwork === 'mainnet' ? 'wrangler.jsonc' : 'wrangler.testnet.jsonc';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {

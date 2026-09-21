@@ -1,4 +1,4 @@
-# UX Audit: MemoMatch Payment Screen
+# UX Audit: Settlr Payment Screen
 
 ## 1. Audit Umfang
 

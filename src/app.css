@@ -1,7 +1,41 @@
 @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,400..900;1,400..900&display=swap');
 @import 'tailwindcss';
 @plugin 'daisyui' {
-  themes: memomatch --default;
+  themes: settlr --default;
+}
+
+@plugin 'daisyui/theme' {
+  name: 'settlr';
+  default: true;
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f8f8f5;
+  --color-base-300: #e2e7ef;
+  --color-base-content: #172238;
+  --color-primary: #2454d6;
+  --color-primary-content: #ffffff;
+  --color-secondary: #596579;
+  --color-secondary-content: #ffffff;
+  --color-accent: #dce7ff;
+  --color-accent-content: #172238;
+  --color-neutral: #172238;
+  --color-neutral-content: #ffffff;
+  --color-info: #4567b7;
+  --color-info-content: #ffffff;
+  --color-success: #2b8c67;
+  --color-success-content: #ffffff;
+  --color-warning: #a86b13;
+  --color-warning-content: #ffffff;
+  --color-error: #a44d4d;
+  --color-error-content: #ffffff;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
 }
 
 @theme {
@@ -14,21 +48,37 @@
 :root {
   font-family: var(--font-sans);
   color: #172238;
-  background: #f6f8fb;
+  background: #f8f8f5;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  --mm-bg: #f8f8f5;
+  --mm-surface: #ffffff;
+  --mm-ink: #172238;
+  --mm-muted: #596579;
+  --mm-subtle: #7f8a9d;
+  --mm-line: #e2e7ef;
+  --mm-soft-line: #edf0f5;
+  --mm-primary: #2454d6;
+  --mm-primary-hover: #1c43ae;
+  --mm-soft-blue: #eef3ff;
+  --mm-success: #2b8c67;
+  --mm-success-bg: #eaf8f1;
+  --mm-warning: #a86b13;
+  --mm-warning-bg: #fff6e6;
+  --mm-error: #a44d4d;
+  --mm-error-bg: #fff4f4;
 }
 
 html {
   min-width: 320px;
-  background: #f6f8fb;
+  background: var(--mm-bg);
 }
 
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: #f6f8fb;
+  background: var(--mm-bg);
 }
 
 button,
@@ -43,7 +93,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid rgba(36, 84, 214, 0.28);
+  outline: 3px solid rgba(36, 84, 214, 0.3);
   outline-offset: 2px;
 }
 
@@ -111,4 +161,230 @@ textarea:focus-visible {
   border-color: #d4dced;
   color: #435579;
   box-shadow: none;
+}
+
+/* Shared application surfaces. Page-specific components can opt into these
+   classes without re-declaring the visual language in every route. */
+.app-surface {
+  border: 1px solid var(--mm-line);
+  border-radius: 12px;
+  background: var(--mm-surface);
+  box-shadow: 0 14px 40px rgba(23, 34, 56, 0.035);
+}
+
+.app-surface-quiet {
+  border: 1px solid var(--mm-line);
+  border-radius: 12px;
+  background: var(--mm-surface);
+}
+
+.app-field {
+  min-height: 44px;
+  border: 1px solid #d8e1ee;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--mm-ink);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.app-field:focus-within {
+  border-color: var(--mm-primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(36, 84, 214, 0.12);
+}
+
+.app-field input,
+.app-field textarea,
+.app-field select {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.app-button {
+  min-height: 44px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 650;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.app-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.app-button-secondary {
+  border: 1px solid var(--mm-line);
+  background: #ffffff;
+  color: var(--mm-muted);
+}
+
+.app-button-secondary:hover:not(:disabled) {
+  border-color: #bdc9dd;
+  background: #fbfcfe;
+  color: var(--mm-ink);
+}
+
+.mono-numbers {
+  font-variant-numeric: tabular-nums;
+}
+
+.technical-value {
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.status-chip::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.status-success {
+  color: var(--mm-success);
+  background: var(--mm-success-bg);
+}
+
+.status-warning {
+  color: var(--mm-warning);
+  background: var(--mm-warning-bg);
+}
+
+.status-info {
+  color: #4567b7;
+  background: #eef2ff;
+}
+
+.status-neutral {
+  color: #68768b;
+  background: #eff2f6;
+}
+
+.loading-surface {
+  animation: settlr-pulse 1.45s ease-in-out infinite;
+}
+
+@keyframes settlr-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.page-error {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 32px 20px;
+  background: var(--mm-bg);
+  color: var(--mm-ink);
+}
+
+.page-error__panel {
+  width: min(100%, 520px);
+  padding: 32px;
+  text-align: center;
+}
+
+.page-error__panel h1 {
+  margin-top: 18px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.page-error__panel p {
+  margin: 10px auto 0;
+  color: var(--mm-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.app-shell,
+.payment-page,
+.receipt-page,
+.docs-page {
+  background-color: var(--mm-bg) !important;
+}
+
+.app-shell header,
+.payment-page header,
+.receipt-page > div > div:first-child,
+.docs-page header {
+  color: var(--mm-ink);
+}
+
+.app-shell input,
+.app-shell textarea,
+.app-shell select,
+.payment-page input,
+.payment-page textarea,
+.payment-page select,
+.docs-page input,
+.docs-page textarea,
+.docs-page select {
+  font-family: inherit;
+}
+
+.workspace input:focus,
+.workspace textarea:focus,
+.workspace select:focus,
+.payment-page input:focus,
+.payment-page textarea:focus,
+.payment-page select:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.docs-page pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre;
+  border-radius: 12px;
+}
+
+.docs-page code {
+  overflow-wrap: anywhere;
+}
+
+.docs-nav-active {
+  background: #eaf0ff;
+  color: var(--mm-primary) !important;
+  font-weight: 650;
+}
+
+.receipt-page .technical-value,
+.payment-page .font-mono {
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-surface {
+    animation: none;
+  }
 }

@@ -13,7 +13,9 @@
     ShieldCheck,
     WalletCards
   } from 'lucide-svelte';
+  import { onMount } from 'svelte';
   import { ARC_MEMO_ADDRESS, ARC_USDC_ADDRESS } from '$lib/config';
+  import LogoMark from '$lib/components/LogoMark.svelte';
 
   const integrationExample = `import { createPublicClient, http } from 'viem';
 import { arcTestnet } from 'viem/chains';
@@ -132,8 +134,17 @@ const status = deriveStatus(
     ]
   ];
 
+  const navItems = [
+    ['#choose', 'Choose a path'],
+    ['#quick-start', 'Quick start'],
+    ['#api', 'API'],
+    ['#errors', 'Errors'],
+    ['#operations', 'Operations']
+  ] as const;
+
   let copied = '';
   let copyAnnouncement = '';
+  let activeSection = '#choose';
   async function copy(value: string, key: string) {
     await navigator.clipboard?.writeText(value);
     copied = key;
@@ -143,32 +154,42 @@ const status = deriveStatus(
       copyAnnouncement = '';
     }, 1800);
   }
+
+  onMount(() => {
+    const sections = navItems
+      .map(([id]) => document.querySelector(id))
+      .filter((section): section is Element => Boolean(section));
+    if (!sections.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target.id) activeSection = `#${visible.target.id}`;
+      },
+      { rootMargin: '-18% 0px -65% 0px', threshold: [0, 0.2, 0.6] }
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  });
 </script>
 
-<svelte:head><title>Developer documentation | MemoMatch</title></svelte:head>
+<svelte:head><title>Developer documentation | Settlr</title></svelte:head>
 
-<div class="min-h-screen bg-[#f6f8fb] px-5 py-8 text-[#172238] sm:py-12">
+<div
+  class="docs-page min-h-screen bg-[#f8f8f5] px-5 py-8 text-[#172238] sm:py-12"
+  data-page="docs"
+>
   <div class="mx-auto max-w-[1120px]">
     <header class="flex items-center justify-between gap-4">
       <a href="/" class="flex items-center gap-2.5 text-sm font-semibold"
-        ><span
-          class="grid h-8 w-8 place-items-center rounded-[9px] bg-[#172238] text-white"
-          ><svg
-            viewBox="0 0 24 24"
-            class="h-4 w-4"
-            fill="none"
-            aria-hidden="true"
-            ><path
-              d="M5 17V7l4 5 3-4 3 4 4-5v10"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            /><circle cx="18.5" cy="6" r="1.5" fill="#8daeff" /></svg
-          ></span
-        >MemoMatch</a
+        ><span class="grid h-8 w-8 place-items-center rounded-[9px]"
+          ><LogoMark /></span
+        >Settlr</a
       >
-      <a href="/app" class="btn btn-ghost btn-sm gap-2 rounded-lg text-[#596579]"
+      <a
+        href="/app"
+        class="btn btn-ghost btn-sm gap-2 rounded-lg text-[#596579]"
         ><LayoutDashboard size={15} />Open app</a
       >
     </header>
@@ -186,9 +207,9 @@ const status = deriveStatus(
           Verify Arc payments with a reusable core.
         </h1>
         <p class="mt-6 max-w-[680px] text-[17px] leading-7 text-[#66758b]">
-          MemoMatch binds a payment request to a direct USDC transfer through
-          Arc's Memo contract. The core package verifies the reference without
-          taking custody of funds.
+          Settlr binds a payment request to a direct USDC transfer through Arc's
+          Memo contract. The core package verifies the reference without taking
+          custody of funds.
         </p>
         <div class="mt-7 flex flex-wrap gap-2 text-xs font-semibold">
           <span class="rounded-full bg-[#eaf8f1] px-3 py-2 text-[#257b5d]"
@@ -213,13 +234,39 @@ const status = deriveStatus(
 
       <p class="sr-only" aria-live="polite">{copyAnnouncement}</p>
 
+      <details
+        class="docs-mobile-nav mt-8 rounded-xl border border-[#e2e7ef] bg-white sm:hidden"
+      >
+        <summary
+          class="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 text-sm font-semibold text-[#33415b]"
+        >
+          On this page <span class="text-xs font-medium text-[#7f8a9d]"
+            >Choose a section</span
+          >
+        </summary>
+        <div
+          class="grid gap-1 border-t border-[#edf0f5] p-2 text-sm text-[#596579]"
+        >
+          {#each navItems as link}
+            <a
+              href={link[0]}
+              class:docs-nav-active={activeSection === link[0]}
+              class="rounded-lg px-3 py-2 hover:bg-[#f4f7fc] hover:text-[#2454d6]"
+              >{link[1]}</a
+            >
+          {/each}
+        </div>
+      </details>
+
       <nav
         aria-label="Documentation sections"
-        class="sticky top-0 z-30 -mx-5 mt-10 flex gap-1 overflow-x-auto border-y border-[#dfe5ee] bg-[#f6f8fb]/95 px-5 py-3 text-sm font-medium text-[#66758b] backdrop-blur-xl sm:mx-0 sm:border-t-0 sm:px-0"
+        class="docs-section-nav sticky top-0 z-30 -mx-5 mt-10 hidden gap-1 overflow-x-auto border-y border-[#dfe5ee] bg-[#f8f8f5]/95 px-5 py-3 text-sm font-medium text-[#66758b] backdrop-blur-xl sm:mx-0 sm:flex sm:border-t-0 sm:px-0"
       >
-        {#each [['#choose', 'Choose a path'], ['#quick-start', 'Quick start'], ['#api', 'API'], ['#errors', 'Errors'], ['#operations', 'Operations']] as link}
+        {#each navItems as link}
           <a
             href={link[0]}
+            class:docs-nav-active={activeSection === link[0]}
+            aria-current={activeSection === link[0] ? 'location' : undefined}
             class="shrink-0 rounded-lg px-3 py-2 transition-colors hover:bg-white hover:text-[#2454d6]"
             >{link[1]}</a
           >
@@ -248,9 +295,9 @@ const status = deriveStatus(
             >
               <WalletCards size={19} />
             </div>
-            <h3 class="mt-5 text-xl font-semibold">Hosted MemoMatch</h3>
+            <h3 class="mt-5 text-xl font-semibold">Hosted Settlr</h3>
             <p class="mt-2 text-sm leading-6 text-[#66758b]">
-              Create payment links and let MemoMatch operate verification,
+              Create payment links and let Settlr operate verification,
               recovery, receipts and the payment dashboard.
             </p>
             <ul class="mt-5 space-y-3 text-sm text-[#596579]">
@@ -271,7 +318,9 @@ const status = deriveStatus(
                 />Suitable for service teams
               </li>
             </ul>
-            <a href="/app" class="btn btn-primary btn-sm mt-6 h-10 rounded-lg px-4"
+            <a
+              href="/app"
+              class="btn btn-primary btn-sm mt-6 h-10 rounded-lg px-4"
               >Open payment workspace<ChevronRight size={15} /></a
             >
           </article>
@@ -695,7 +744,7 @@ const status = deriveStatus(
             <div
               class="mt-5 rounded-xl bg-[#f7f9fc] p-4 text-xs leading-5 text-[#596b87]"
             >
-              Wallet keys never enter MemoMatch. The payer signs and submits the
+              Wallet keys never enter Settlr. The payer signs and submits the
               transaction in the wallet.
             </div>
           </aside>
@@ -706,7 +755,7 @@ const status = deriveStatus(
     <footer
       class="flex flex-wrap items-center justify-between gap-3 border-t border-[#dfe5ee] py-6 text-xs text-[#8994a6]"
     >
-      <span>MemoMatch core 0.1.0 · Source only preview</span>
+      <span>Settlr core 0.1.0 · Source only preview</span>
       <span>MIT licensed · No custody</span>
     </footer>
   </div>

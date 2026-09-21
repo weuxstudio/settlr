@@ -2,13 +2,17 @@
   import { onMount } from 'svelte';
   import {
     ArrowLeft,
+    CircleAlert,
     CheckCircle2,
     ExternalLink,
     FileCheck2,
+    LoaderCircle,
     Printer
   } from 'lucide-svelte';
   import { formatDate, formatUsdcBaseUnits } from '$lib/format';
   import { shortenAddress } from '$lib/config';
+  import NetworkBadge from '$lib/components/NetworkBadge.svelte';
+  import LogoMark from '$lib/components/LogoMark.svelte';
   import type { PaymentRequest, PaymentStatus } from '$lib/types';
 
   type PublicReceipt = {
@@ -19,10 +23,13 @@
     overpaidMicroUsdc: string;
     status: PaymentStatus;
     memoId: string;
+    network?: string;
+    chainId?: number;
     payments: PaymentRequest['payments'];
   };
   let request: PublicReceipt | null = null;
   let error = '';
+  let loading = true;
   $: receiptStatus = request ? getStatus(request) : 'Open';
 
   function getStatus(item: PublicReceipt): PaymentStatus {
@@ -31,36 +38,40 @@
 
   onMount(async () => {
     const token = window.location.pathname.split('/').pop();
-    const response = await fetch(`/api/receipts/${token}`);
-    if (!response.ok) error = 'This receipt is not available.';
-    else request = (await response.json()).request;
+    try {
+      const response = await fetch(`/api/receipts/${token}`, {
+        cache: 'no-store'
+      });
+      if (!response.ok) {
+        error =
+          response.status === 404
+            ? 'This receipt does not exist or is not public.'
+            : 'The receipt service is temporarily unavailable.';
+        return;
+      }
+      const payload = (await response.json()) as { request?: PublicReceipt };
+      if (!payload.request) throw new Error('Missing receipt data.');
+      request = payload.request;
+    } catch {
+      error = 'The receipt could not be loaded. Please try again.';
+    } finally {
+      loading = false;
+    }
   });
 </script>
 
-<svelte:head><title>Payment receipt | MemoMatch</title></svelte:head>
+<svelte:head><title>Payment receipt | Settlr</title></svelte:head>
 
 <div
-  class="min-h-screen bg-[#f6f8fb] px-5 py-8 text-[#172238] print:bg-white sm:py-12"
+  class="receipt-page min-h-screen bg-[#f8f8f5] px-5 py-8 text-[#172238] print:bg-white sm:py-12"
+  data-page="receipt"
 >
   <div class="mx-auto max-w-[760px]">
     <div class="flex items-center justify-between print:hidden">
       <a href="/" class="flex items-center gap-2.5 text-sm font-semibold"
-        ><span
-          class="grid h-8 w-8 place-items-center rounded-[9px] bg-[#172238] text-white"
-          ><svg
-            viewBox="0 0 24 24"
-            class="h-4 w-4"
-            fill="none"
-            aria-hidden="true"
-            ><path
-              d="M5 17V7l4 5 3-4 3 4 4-5v10"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            /><circle cx="18.5" cy="6" r="1.5" fill="#8daeff" /></svg
-          ></span
-        >MemoMatch</a
+        ><span class="grid h-8 w-8 place-items-center rounded-[9px]"
+          ><LogoMark /></span
+        >Settlr</a
       >
       <div class="flex gap-2">
         <button
@@ -76,17 +87,30 @@
     </div>
 
     {#if error}
-      <div
-        class="mt-12 rounded-xl border border-[#ecd0d0] bg-white p-10 text-center"
-      >
-        <h1 class="text-lg font-semibold">Receipt unavailable</h1>
+      <div class="app-surface mt-12 p-10 text-center">
+        <CircleAlert size={26} class="mx-auto text-[#a44d4d]" />
+        <h1 class="mt-4 text-lg font-semibold">Receipt unavailable</h1>
         <p class="mt-2 text-sm text-[#7f8a9d]">{error}</p>
+        <a href="/" class="btn btn-primary mt-6 h-11 rounded-lg px-5"
+          >Back to Settlr</a
+        >
+      </div>
+    {:else if loading}
+      <div
+        class="app-surface mt-12 p-10 text-center"
+        role="status"
+        aria-live="polite"
+      >
+        <LoaderCircle size={24} class="mx-auto animate-spin text-[#2454d6]" />
+        <p class="mt-3 text-sm text-[#596579]">Loading verified receipt…</p>
       </div>
     {:else if !request}
-      <div
-        class="mt-12 rounded-xl border border-[#e0e6ef] bg-white p-10 text-center"
-      >
-        <span class="loading loading-spinner text-[#2454d6]"></span>
+      <div class="app-surface mt-12 p-10 text-center">
+        <CircleAlert size={26} class="mx-auto text-[#a44d4d]" />
+        <h1 class="mt-4 text-lg font-semibold">Receipt unavailable</h1>
+        <p class="mt-2 text-sm text-[#7f8a9d]">
+          No public receipt data was returned.
+        </p>
       </div>
     {:else}
       <article
@@ -101,7 +125,10 @@
                   ? 'text-[#8994a6]'
                   : 'text-[#2b8c67]'}"
               >
-                <CheckCircle2 size={15} />{receiptStatus === 'Open'
+                {#if receiptStatus === 'Open'}<CircleAlert
+                    size={15}
+                  />{:else}<CheckCircle2 size={15} />{/if}{receiptStatus ===
+                'Open'
                   ? 'No verified payment yet'
                   : 'Verified settlement record'}
               </div>
@@ -138,14 +165,45 @@
             </div>
           </div>
           <div class="min-w-0 px-6 py-5 sm:px-10">
-            <div class="text-xs text-[#8994a6]">Total settled</div>
-            <div
-              class="mono-numbers mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-2xl font-semibold tracking-[-0.015em] text-[#172238]"
-            >
-              ${formatUsdcBaseUnits(request.paidMicroUsdc)}
-              <span class="text-sm font-medium text-[#8994a6]">USDC</span>
+            <div class="text-xs text-[#8994a6]">Settlement summary</div>
+            <div class="mt-3 grid grid-cols-1 gap-3 xs:grid-cols-3">
+              <div>
+                <div class="text-[11px] text-[#9aa4b5]">Requested</div>
+                <div
+                  class="mono-numbers mt-1 text-base font-semibold text-[#172238]"
+                >
+                  {formatUsdcBaseUnits(request.amountMicroUsdc)}
+                  <span class="text-xs font-medium text-[#8994a6]">USDC</span>
+                </div>
+              </div>
+              <div>
+                <div class="text-[11px] text-[#9aa4b5]">Received</div>
+                <div
+                  class="mono-numbers mt-1 text-base font-semibold text-[#172238]"
+                >
+                  {formatUsdcBaseUnits(request.paidMicroUsdc)}
+                  <span class="text-xs font-medium text-[#8994a6]">USDC</span>
+                </div>
+              </div>
+              <div>
+                <div class="text-[11px] text-[#9aa4b5]">
+                  {BigInt(request.overpaidMicroUsdc) > 0n
+                    ? 'Overpaid'
+                    : 'Remaining'}
+                </div>
+                <div
+                  class="mono-numbers mt-1 text-base font-semibold text-[#172238]"
+                >
+                  {formatUsdcBaseUnits(
+                    BigInt(request.overpaidMicroUsdc) > 0n
+                      ? request.overpaidMicroUsdc
+                      : request.remainingMicroUsdc
+                  )}
+                  <span class="text-xs font-medium text-[#8994a6]">USDC</span>
+                </div>
+              </div>
             </div>
-            <div class="mt-1 text-[11px] text-[#2b8c67]">
+            <div class="mt-3 text-[11px] text-[#2b8c67]">
               {receiptStatus === 'Paid'
                 ? 'Fully paid'
                 : receiptStatus === 'Overpaid'
@@ -157,9 +215,12 @@
           </div>
         </div>
         <div class="px-6 py-6 sm:px-10">
-          <h2 class="text-sm font-semibold text-[#33415b]">
-            Verified transfers
-          </h2>
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-sm font-semibold text-[#33415b]">
+              Verified transfers
+            </h2>
+            <NetworkBadge network={request.network ?? 'testnet'} compact />
+          </div>
           <div class="mt-4 overflow-hidden rounded-lg border border-[#e3e8f0]">
             <div
               class="hidden grid-cols-[1fr_130px_150px_24px] gap-4 border-b border-[#edf0f5] bg-[#fbfcfe] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#929cad] sm:grid"
@@ -169,38 +230,47 @@
               <div>Received</div>
               <div></div>
             </div>
-            {#each request.payments as payment}
-              <a
-                href={payment.explorerUrl}
-                target="_blank"
-                rel="noreferrer"
-                class="grid grid-cols-1 gap-2 border-b border-[#edf0f5] px-4 py-4 last:border-b-0 hover:bg-[#fbfcfe] sm:grid-cols-[1fr_130px_150px_24px] sm:items-center sm:gap-4"
-                ><div>
-                  <div class="font-mono text-xs text-[#596579]">
-                    {shortenAddress(payment.payer, 10, 8)}
+            {#if request.payments.length === 0}
+              <div class="px-4 py-8 text-center text-sm text-[#7f8a9d]">
+                No verified transfers have been recorded yet.
+              </div>
+            {:else}
+              {#each request.payments as payment}
+                <a
+                  href={payment.explorerUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  class="grid grid-cols-1 gap-2 border-b border-[#edf0f5] px-4 py-4 last:border-b-0 hover:bg-[#fbfcfe] sm:grid-cols-[1fr_130px_150px_24px] sm:items-center sm:gap-4"
+                  ><div>
+                    <div class="font-mono text-xs text-[#596579]">
+                      {shortenAddress(payment.payer, 10, 8)}
+                    </div>
+                    <div class="mt-1 font-mono text-[10px] text-[#9aa4b5]">
+                      {shortenAddress(payment.transactionHash, 10, 8)}
+                    </div>
                   </div>
-                  <div class="mt-1 font-mono text-[10px] text-[#9aa4b5]">
-                    {shortenAddress(payment.transactionHash, 10, 8)}
+                  <div
+                    class="mono-numbers text-sm font-semibold text-[#33415b]"
+                  >
+                    {formatUsdcBaseUnits(payment.amountMicroUsdc ?? '0')}
+                    <span class="text-xs font-medium text-[#8994a6]">USDC</span>
                   </div>
-                </div>
-                <div class="mono-numbers text-sm font-semibold text-[#33415b]">
-                  ${formatUsdcBaseUnits(payment.amountMicroUsdc ?? '0')}
-                </div>
-                <div class="text-xs text-[#7f8a9d]">
-                  {formatDate(payment.receivedAt)}
-                </div>
-                <ExternalLink
-                  size={14}
-                  class="hidden text-[#8994a6] sm:block"
-                /></a
-              >
-            {/each}
+                  <div class="text-xs text-[#7f8a9d]">
+                    {formatDate(payment.receivedAt)}
+                  </div>
+                  <ExternalLink
+                    size={14}
+                    class="hidden text-[#8994a6] sm:block"
+                  /></a
+                >
+              {/each}
+            {/if}
           </div>
         </div>
         <div
           class="flex flex-col gap-2 border-t border-[#e4e9f1] bg-[#fbfcfe] px-6 py-5 text-[11px] text-[#8994a6] sm:flex-row sm:items-center sm:justify-between sm:px-10"
         >
-          <span>Arc · Verified by MemoMatch</span><span class="font-mono"
+          <span>Arc · Verified by Settlr</span><span class="font-mono"
             >{request.memoId.slice(0, 18)}…</span
           >
         </div>

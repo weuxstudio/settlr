@@ -1,4 +1,4 @@
-# MemoMatch: Sicherheitsprüfung und Fehleranalyse
+# Settlr: Sicherheitsprüfung und Fehleranalyse
 
 Stand: 17. September 2026. Geprüft wurde der lokale Quellcode einschließlich Anmeldung, API, Datenzugriff, Zahlungsmodul, Indexer, Oberfläche und installierter Abhängigkeiten.
 

@@ -60,7 +60,7 @@ export async function createChallenge(
     uri: origin,
     version: '1',
     nonce,
-    statement: 'Sign in to MemoMatch to manage your payment requests.',
+    statement: 'Sign in to Settlr to manage your payment requests.',
     expirationTime: new Date(expiresAt)
   });
   if (db) {

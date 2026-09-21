@@ -1,6 +1,6 @@
-# MemoMatch
+# Settlr
 
-MemoMatch is an Arc payment request MVP for USDC. A recipient creates a request, shares a public link, and receives a verifiable settlement receipt. The payer uses an existing MetaMask or Rabby wallet. Funds move directly to the recipient.
+Settlr is an Arc payment request MVP for USDC. A recipient creates a request, shares a public link, and receives a verifiable settlement receipt. The payer uses an existing MetaMask or Rabby wallet. Funds move directly to the recipient.
 
 The application is built with SvelteKit 2, Svelte 5, Tailwind CSS 4, daisyUI 5, Anime.js 4, Viem, Drizzle and Cloudflare Workers with D1.
 
@@ -50,7 +50,7 @@ npm run build
 
 The default local configuration uses Arc Testnet. Arc Mainnet uses chain ID `5042`, USDC `0x3600000000000000000000000000000000000000` and Memo `0x5294E9927c3306DcBaDb03fe70b92e01cCede505`. Set `PUBLIC_ARC_NETWORK=mainnet` only for an explicitly configured production build. The Worker rejects a build whose network does not match its runtime binding.
 
-Runtime configuration belongs in Cloudflare Worker bindings or secrets. Private wallet keys are never required by MemoMatch. The browser wallet signs and sends the memo transaction, while the server verifies the final receipt.
+Runtime configuration belongs in Cloudflare Worker bindings or secrets. Private wallet keys are never required by Settlr. The browser wallet signs and sends the memo transaction, while the server verifies the final receipt.
 
 The testnet configuration enables payment verification for wallet and receipt acceptance testing. Mainnet remains disabled with `PAYMENTS_ENABLED=false` until the corresponding production acceptance test is complete. The indexer also requires an explicit `ARC_START_BLOCK`; placeholder values intentionally fail the scheduled run instead of skipping historical blocks.
 
@@ -96,4 +96,4 @@ Verification requires a successful Arc receipt, the expected Memo contract and m
 - `workers/indexer.ts` contains the scheduled D1 indexer.
 - `migrations` contains versioned D1 SQL migrations.
 
-MemoMatch is released under the MIT license.
+Settlr is released under the MIT license.

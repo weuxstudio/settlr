@@ -59,7 +59,7 @@ export async function GET({ cookies, platform }) {
   return new Response(csv, {
     headers: {
       'content-type': 'text/csv; charset=utf-8',
-      'content-disposition': 'attachment; filename="memomatch-requests.csv"',
+      'content-disposition': 'attachment; filename="settlr-requests.csv"',
       'cache-control': 'no-store'
     }
   });

@@ -1,4 +1,4 @@
-# MemoMatch Payment Screen Design QA
+# Settlr Payment Screen Design QA
 
 ## Evidence
 
@@ -33,7 +33,7 @@ The expanded capture was used to inspect typography, row alignment, wallet addre
 1. Fonts and typography: Urbanist is used consistently. The heading, amount and body hierarchy remain distinct. Long purpose text wraps without clipping. Small interface text remains legible.
 2. Spacing and layout rhythm: The desktop grid and mobile stack use consistent section gaps, card radii and internal padding. No horizontal overflow is visible at 360 pixels.
 3. Colors and visual tokens: Navy text, blue actions, neutral surfaces, green verification and amber testnet warnings have distinct semantic roles. Contrast remains clear in the inspected states.
-4. Image and asset quality: The interface uses vector Lucide icons and the existing vector MemoMatch mark. No raster asset or placeholder substitution affects fidelity.
+4. Image and asset quality: The interface uses vector Lucide icons and the existing vector Settlr mark. No raster asset or placeholder substitution affects fidelity.
 5. Copy and content: The screen identifies the requester, purpose, amount, reference, due date, network, payment state and expected confirmation behavior. Technical details remain optional.
 
 ## Interaction Checks

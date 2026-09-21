@@ -74,7 +74,7 @@ function walletError(error: unknown, fallback: string) {
 
 function missingProviderError() {
   return new Error(
-    'No wallet found. Open MemoMatch in MetaMask or Rabby, or install a wallet extension.'
+    'No wallet found. Open Settlr in MetaMask or Rabby, or install a wallet extension.'
   );
 }
 

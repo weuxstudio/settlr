@@ -4,6 +4,8 @@
   import { page } from '$app/stores';
   import Brand from '$lib/components/Brand.svelte';
   import WorkspaceEntry from '$lib/components/WorkspaceEntry.svelte';
+  import NetworkBadge from '$lib/components/NetworkBadge.svelte';
+  import StatusChip from '$lib/components/StatusChip.svelte';
   import {
     readWorkspaceSession,
     withoutCreateIntent,
@@ -344,13 +346,6 @@
     if (paid < amount) return 'Partially paid';
     if (paid === amount) return 'Paid';
     return 'Overpaid';
-  }
-
-  function statusClass(status: PaymentStatus) {
-    if (status === 'Paid') return 'status-success';
-    if (status === 'Partially paid') return 'status-warning';
-    if (status === 'Overpaid') return 'status-info';
-    return 'status-neutral';
   }
 
   function formatDuration(milliseconds: number) {
@@ -713,14 +708,15 @@
 
 <svelte:head>
   <title
-    >{walletAddress ? 'Payment overview' : 'Open your workspace'} | MemoMatch</title
+    >{walletAddress ? 'Payment overview' : 'Open your workspace'} | Settlr</title
   >
   <meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
 <div
   bind:this={scopeRoot}
-  class="workspace min-h-screen bg-[#f6f8fb] text-[#172238]"
+  class="workspace app-shell min-h-screen bg-[#f8f8f5] text-[#172238]"
+  data-page="workspace"
 >
   <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
     <div class="soft-grid absolute inset-x-0 top-0 h-[520px] opacity-70"></div>
@@ -767,6 +763,7 @@
         </nav>
         <div class="flex items-center gap-2.5">
           {#if walletAddress}
+            <NetworkBadge compact />
             <div class="relative">
               <button
                 class="btn btn-sm h-10 gap-2 rounded-lg border-[#dce3ee] bg-white px-3 font-medium text-[#33415b] shadow-none hover:border-[#bdc9dd]"
@@ -1138,16 +1135,10 @@
                   <div class="flex items-center justify-between gap-3 md:block">
                     <span class="text-[11px] text-[#9aa4b5] md:hidden"
                       >Status</span
-                    ><span
-                      class={'status-chip ' + statusClass(getStatus(request))}
-                      >{getStatus(request)}</span
-                    >
-                    {#if request.closedAt}
-                      <span
-                        class="mt-1 block text-xs font-medium text-[#7f8a9d]"
-                        >Link closed</span
-                      >
-                    {/if}
+                    ><StatusChip
+                      status={getStatus(request)}
+                      closed={Boolean(request.closedAt)}
+                    />
                   </div>
                   <div class="flex items-center justify-between md:block">
                     <span class="text-[11px] text-[#9aa4b5] md:hidden">Due</span
@@ -1259,9 +1250,9 @@
   </div>
 
   <footer
-    class="mx-auto flex max-w-[1480px] flex-wrap items-center justify-between gap-3 border-t border-[#e2e7ef] px-5 pb-8 pt-5 text-xs text-[#8994a6] lg:px-8"
+    class="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-3 border-t border-[#e2e7ef] px-5 pb-8 pt-5 text-xs text-[#8994a6] lg:px-8"
   >
-    <span>MemoMatch v0.1 · Arc {ARC_ENVIRONMENT}</span>
+    <span>Settlr v0.1 · Arc {ARC_ENVIRONMENT}</span>
     <div class="flex items-center gap-4">
       <a
         href="/docs"
@@ -1385,10 +1376,10 @@
           <div
             class="mt-4 flex items-center justify-between border-t border-[#e6ebf2] pt-3 text-xs"
           >
-            <span class="text-[#7f8a9d]">Status</span><span
-              class={`status-chip ${statusClass(getStatus(selectedRequest))}`}
-              >{getStatus(selectedRequest)}</span
-            >
+            <span class="text-[#7f8a9d]">Status</span><StatusChip
+              status={getStatus(selectedRequest)}
+              closed={Boolean(selectedRequest.closedAt)}
+            />
           </div>
         </div>
         <div class="mt-6 space-y-4">
@@ -1848,38 +1839,4 @@
 </div>
 
 <style>
-  :global(.status-chip) {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border-radius: 999px;
-    padding: 5px 9px;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1;
-    white-space: nowrap;
-  }
-  :global(.status-chip::before) {
-    content: '';
-    width: 5px;
-    height: 5px;
-    border-radius: 999px;
-    background: currentColor;
-  }
-  :global(.status-success) {
-    color: #2b8c67;
-    background: #eaf8f1;
-  }
-  :global(.status-warning) {
-    color: #a86b13;
-    background: #fff6e6;
-  }
-  :global(.status-info) {
-    color: #4567b7;
-    background: #eef2ff;
-  }
-  :global(.status-neutral) {
-    color: #68768b;
-    background: #eff2f6;
-  }
 </style>

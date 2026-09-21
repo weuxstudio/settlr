@@ -21,6 +21,9 @@
   } from 'lucide-svelte';
   import { formatDate, formatUsdcBaseUnits, parseUsdc } from '$lib/format';
   import { ARC_EXPLORER_URL, shortenAddress } from '$lib/config';
+  import NetworkBadge from '$lib/components/NetworkBadge.svelte';
+  import StatusChip from '$lib/components/StatusChip.svelte';
+  import LogoMark from '$lib/components/LogoMark.svelte';
   import {
     connectWallet,
     inspectMemoPayment,
@@ -284,11 +287,12 @@
         : parsedAmount > remaining
           ? `Enter no more than ${formatUsdcBaseUnits(remaining)} USDC.`
           : '';
-  $: isClosed =
-    Boolean(request?.closedAt) ||
+  $: isSettled =
     request?.status === 'Paid' ||
     request?.status === 'Overpaid' ||
     remaining === 0n;
+  $: isClosedLink = Boolean(request?.closedAt);
+  $: paymentUnavailable = isClosedLink || isSettled;
   $: estimatedFee = BigInt(walletPreview?.estimatedFeeMicroUsdc ?? '0');
   $: estimatedTotal = parsedAmount > 0n ? parsedAmount + estimatedFee : 0n;
 
@@ -527,7 +531,7 @@
         network: request.network
       });
       message =
-        'Transaction submitted. MemoMatch is checking the final Arc receipt.';
+        'Transaction submitted. Settlr is checking the final Arc receipt.';
       isSending = false;
       void registerAndPoll(transactionHash);
     } catch (cause) {
@@ -573,44 +577,26 @@
 
 <svelte:head>
   <title>
-    {request?.publicDescription || 'Payment request'} | MemoMatch
+    {request?.publicDescription || 'Payment request'} | Settlr
   </title>
 </svelte:head>
 
 <div
   bind:this={scopeRoot}
-  class="min-h-screen bg-[#f6f8fb] px-4 py-6 text-[#172238] sm:px-6 sm:py-10"
+  class="payment-page min-h-screen bg-[#f8f8f5] px-4 py-6 text-[#172238] sm:px-6 sm:py-10"
+  data-page="payment"
 >
   <div class="mx-auto max-w-[1080px]">
     <header class="flex items-center justify-between gap-4">
       <a href="/" class="flex items-center gap-2.5 text-sm font-semibold">
         <span
-          class="grid h-9 w-9 place-items-center rounded-[10px] bg-[#172238] text-white shadow-[0_7px_16px_rgba(23,34,56,0.14)]"
-          ><svg
-            viewBox="0 0 24 24"
-            class="h-4 w-4"
-            fill="none"
-            aria-hidden="true"
-            ><path
-              d="M5 17V7l4 5 3-4 3 4 4-5v10"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            /><circle cx="18.5" cy="6" r="1.5" fill="#8daeff" /></svg
-          ></span
+          class="grid h-9 w-9 place-items-center rounded-[10px] shadow-[0_7px_16px_rgba(23,34,56,0.14)]"
+          ><LogoMark /></span
         >
-        <span>MemoMatch</span>
+        <span>Settlr</span>
       </a>
       <div class="flex items-center gap-2">
-        <span
-          class={`hidden items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-semibold sm:flex ${request?.network === 'testnet' ? 'border-[#ead9ad] bg-[#fff9eb] text-[#7a5a13]' : 'border-[#dfe6f1] bg-white text-[#596b87]'}`}
-        >
-          <span
-            class={`h-1.5 w-1.5 rounded-full ${request?.network === 'testnet' ? 'bg-[#c58920]' : 'bg-[#2b9b72]'}`}
-          ></span>
-          Arc {request?.network ?? 'testnet'}
-        </span>
+        <NetworkBadge network={request?.network ?? 'testnet'} compact />
         {#if isRecipientOwner}
           <a
             href="/app#requests"
@@ -704,11 +690,10 @@
               </div>
             {/if}
           </div>
-          <div
-            class={`status-chip self-start sm:self-auto ${request.status === 'Paid' ? 'status-success' : request.status === 'Partially paid' ? 'status-warning' : request.status === 'Overpaid' ? 'status-info' : 'status-neutral'}`}
-          >
-            {request.status}
-          </div>
+          <StatusChip
+            status={request.status}
+            closed={Boolean(request.closedAt)}
+          />
         </div>
 
         <div
@@ -929,8 +914,8 @@
                     class="mt-0.5 shrink-0 text-[#2b8c67]"
                   />
                   <span
-                    >MemoMatch does not hold funds. The wallet sends USDC
-                    directly to the address above.</span
+                    >Settlr does not hold funds. The wallet sends USDC directly
+                    to the address above.</span
                   >
                 </div>
               </div>
@@ -999,22 +984,26 @@
                   <div
                     class="text-[11px] font-semibold uppercase tracking-[0.13em] text-[#2454d6]"
                   >
-                    {isRecipientOwner && !isClosed
+                    {isRecipientOwner && !paymentUnavailable
                       ? 'Requester preview'
-                      : isClosed
-                        ? 'Payment status'
-                        : walletPreview
-                          ? 'Wallet ready'
-                          : 'Payment'}
+                      : isClosedLink && !isSettled
+                        ? 'Request closed'
+                        : isSettled
+                          ? 'Payment status'
+                          : walletPreview
+                            ? 'Wallet ready'
+                            : 'Payment'}
                   </div>
                   <h2
                     class="mt-2 text-xl font-semibold tracking-[-0.015em] text-[#172238]"
                   >
-                    {isRecipientOwner && !isClosed
+                    {isRecipientOwner && !paymentUnavailable
                       ? 'This is your request'
-                      : isClosed
-                        ? 'Payment settled'
-                        : 'Pay this request'}
+                      : isClosedLink && !isSettled
+                        ? 'Payment link closed'
+                        : isSettled
+                          ? 'Payment settled'
+                          : 'Pay this request'}
                   </h2>
                 </div>
                 <span
@@ -1023,7 +1012,7 @@
                 >
               </div>
 
-              {#if isRecipientOwner && !isClosed}
+              {#if isRecipientOwner && !paymentUnavailable}
                 <div
                   data-wallet-state
                   class="mt-6 rounded-xl border border-[#d8e4f8] bg-[#f4f7ff] p-4"
@@ -1053,7 +1042,7 @@
                   Open the payment link in a private window to test the payer
                   experience.
                 </p>
-              {:else if !isClosed}
+              {:else if !paymentUnavailable}
                 <div class="mt-6" data-amount-control>
                   <div class="flex items-center justify-between gap-3">
                     <label
@@ -1097,7 +1086,7 @@
                       ? amountError
                       : allowPartialPayment
                         ? `Choose an amount up to ${formatUsdcBaseUnits(remaining)} USDC.`
-                        : `Full remaining amount. Approximately $${formatUsdcBaseUnits(parsedAmount > 0n ? parsedAmount : 0n)}.`}
+                        : `Full remaining amount: ${formatUsdcBaseUnits(parsedAmount > 0n ? parsedAmount : 0n)} USDC.`}
                   </p>
                 </div>
 
@@ -1163,8 +1152,8 @@
                         Wallet and USDC required
                       </div>
                       <p class="mt-1 text-xs leading-5 text-[#6f7e95]">
-                        MemoMatch will connect the wallet, switch to Arc and
-                        check the balance before any transaction is requested.
+                        Settlr will connect the wallet, switch to Arc and check
+                        the balance before any transaction is requested.
                       </p>
                     </div>
                   </div>
@@ -1296,7 +1285,7 @@
                     {/if}
                   </div>
                 {/if}
-              {:else}
+              {:else if isSettled}
                 <div
                   data-wallet-state
                   class="mt-6 rounded-xl border border-[#cce6d8] bg-[#f0faf4] px-4 py-4"
@@ -1316,6 +1305,29 @@
                     transfer is available below.
                   </p>
                 </div>
+              {:else}
+                <div
+                  data-wallet-state
+                  class="mt-6 rounded-xl border border-[#ead9ad] bg-[#fff9eb] px-4 py-4"
+                >
+                  <div
+                    class="flex items-center gap-2 text-xs font-semibold text-[#7a5a13]"
+                  >
+                    <CircleAlert size={16} />Payment link closed
+                  </div>
+                  <p class="mt-2 text-sm font-semibold text-[#172238]">
+                    No further payments can be started from this link.
+                  </p>
+                  <p class="mt-2 text-xs leading-5 text-[#596b87]">
+                    {#if BigInt(request.paidMicroUsdc) > 0n}
+                      Verified payments remain visible. The open balance is {formatUsdcBaseUnits(
+                        request.remainingMicroUsdc
+                      )} USDC.
+                    {:else}
+                      This request has not received a verified payment yet.
+                    {/if}
+                  </p>
+                </div>
               {/if}
 
               {#if request.payments.length > 0}
@@ -1326,7 +1338,7 @@
                 >
               {/if}
             </section>
-            {#if !isRecipientOwner && !isClosed}
+            {#if !isRecipientOwner && !paymentUnavailable}
               <div
                 class="mt-4 flex items-start gap-2 px-1 text-xs leading-5 text-[#6f7e95]"
               >
@@ -1343,7 +1355,7 @@
     <footer
       class="mt-8 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-[11px] text-[#6f7e95]"
     >
-      <span>Powered by MemoMatch</span><span aria-hidden="true">•</span><span
+      <span>Powered by Settlr</span><span aria-hidden="true">•</span><span
         >Arc {request?.network ?? 'testnet'}</span
       ><span aria-hidden="true">•</span><a
         href="/docs"

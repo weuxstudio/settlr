@@ -7,16 +7,22 @@
     ArrowUpRight,
     Check,
     CheckCircle2,
+    CircleDollarSign,
+    Code2,
+    ExternalLink,
     FilePlus2,
-    Link2,
-    ShieldCheck,
     Fingerprint,
-    ReceiptText
+    Link2,
+    ReceiptText,
+    ShieldCheck,
+    WalletCards
   } from 'lucide-svelte';
   import Brand from '$lib/components/Brand.svelte';
+  import LogoMark from '$lib/components/LogoMark.svelte';
   import Disclosure from '$lib/components/Disclosure.svelte';
   import { ARC_ENVIRONMENT } from '$lib/config';
   import { legacyWorkspaceTarget } from '$lib/client/workspace';
+
   let root: HTMLDivElement;
   onMount(() => {
     const forwardLegacyLink = () => {
@@ -31,32 +37,33 @@
       animations.push(
         animate(root.querySelectorAll('.hero-reveal'), {
           opacity: [0, 1],
-          translateY: [10, 0],
+          translateY: [12, 0],
           duration: 220,
-          delay: (_, i) => (i ?? 0) * 35,
+          delay: (_, index) => (index ?? 0) * 35,
           ease: 'out(3)'
         })
       );
       observer = new IntersectionObserver(
         (entries) => {
-          for (const entry of entries)
-            if (entry.isIntersecting) {
-              animations.push(
-                animate(entry.target, {
-                  opacity: [0, 1],
-                  translateY: [10, 0],
-                  duration: 220,
-                  ease: 'out(3)'
-                })
-              );
-              observer?.unobserve(entry.target);
-            }
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            animations.push(
+              animate(entry.target, {
+                opacity: [0, 1],
+                translateY: [12, 0],
+                duration: 220,
+                ease: 'out(3)'
+              })
+            );
+            observer?.unobserve(entry.target);
+          }
         },
-        { threshold: 0.15 }
+        { threshold: 0.12 }
       );
-      root
-        .querySelectorAll('.section-reveal')
-        .forEach((el) => observer?.observe(el));
+      root.querySelectorAll('.section-reveal').forEach((element) => {
+        (element as HTMLElement).style.opacity = '0';
+        observer?.observe(element);
+      });
     }
     return () => {
       window.removeEventListener('hashchange', forwardLegacyLink);
@@ -67,7 +74,7 @@
 </script>
 
 <svelte:head>
-  <title>MemoMatch | USDC payments. Clearly matched.</title>
+  <title>Settlr | USDC payments, clearly matched</title>
   <meta
     name="description"
     content="Create payment links, match incoming USDC transfers to the right request on Arc, and keep a verifiable receipt."
@@ -79,219 +86,453 @@
     <Brand />
     <nav aria-label="Main navigation">
       <a href="#how-it-works" class="desktop-link">How it works</a>
+      <a href="#why-settlr" class="desktop-link">Why Settlr</a>
       <a href="/docs">Docs</a>
-      <a href="/app" class="nav-app">Open app <ArrowUpRight size={16} /></a>
+      <a href="/app" class="nav-app">Open app <ArrowUpRight size={15} /></a>
     </nav>
   </header>
+
   <main>
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="wrap hero-inner">
-        <div class="hero-copy hero-reveal">
-          <p class="eyebrow">PAYMENT LINKS FOR TEAMS ON ARC</p>
-          <h1 id="hero-title">
-            USDC payments.<br /><span>Clearly matched.</span>
-          </h1>
-          <p class="hero-description">
-            Create payment links, match incoming transfers to the right request,
-            and keep a verifiable receipt. Built for teams receiving USDC on
-            Arc.
-          </p>
-          <div class="hero-actions">
-            <a class="action-primary" href="/app?intent=create"
-              >Create payment request <ArrowRight size={18} /></a
-            >
-            <a class="text-link" href="#how-it-works"
-              >See how it works <ArrowRight size={16} /></a
-            >
-          </div>
-          <p class="wallet-support">Works with MetaMask and Rabby</p>
-          {#if ARC_ENVIRONMENT === 'testnet'}<p class="environment">
-              Arc testnet <span>·</span> Test USDC only
-            </p>{/if}
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow hero-reveal">PAYMENT LINKS FOR TEAMS ON ARC</p>
+        <h1 id="hero-title" class="hero-reveal">
+          USDC payments.<br />Clearly matched.
+        </h1>
+        <p class="hero-description hero-reveal">
+          Create payment links, match incoming transfers to the right request,
+          and keep a verifiable receipt.
+        </p>
+        <div class="hero-actions hero-reveal">
+          <a class="action-primary" href="/app?intent=create"
+            >Create payment request <ArrowRight size={17} /></a
+          >
+          <a class="action-secondary" href="#how-it-works"
+            >See how it works <ArrowRight size={17} /></a
+          >
         </div>
-        <figure
-          class="product-example hero-reveal"
-          aria-label="Illustrative example of a payment request with a matched partial payment"
-        >
+        <div class="hero-meta hero-reveal">
+          <span>MetaMask and Rabby</span>
+          {#if ARC_ENVIRONMENT === 'testnet'}<span class="meta-separator"
+            ></span><span>Arc testnet</span><span class="meta-separator"
+            ></span><span>Test USDC only</span>{/if}
+        </div>
+      </div>
+
+      <div
+        class="product-stage hero-reveal"
+        aria-label="Illustrative Settlr workspace preview"
+      >
+        <div class="stage-orbit orbit-one"></div>
+        <div class="stage-orbit orbit-two"></div>
+        <figure class="workspace-preview">
           <figcaption>
-            <span class="example-dot"></span> Illustrative example
-          </figcaption>
-          <div class="example-sheet">
-            <div class="example-top">
-              <span><ReceiptText size={17} /> PAYMENT REQUEST</span><span
-                class="reference">INV-001</span
-              >
-            </div>
-            <p class="example-requester">Requested by Willow Studio</p>
-            <h2>Website audit</h2>
-            <div class="example-amount">120.00 <span>USDC</span></div>
-            <div class="example-divider"></div>
-            <div class="matched-transfer">
-              <span class="match-icon"><Check size={17} /></span>
-              <div>
-                <strong>Payment matched</strong><span>Reference INV-001</span>
-              </div>
-              <strong class="transfer-amount">+40.00 <small>USDC</small></strong
-              >
-            </div>
-            <div class="remaining">
-              <span>Remaining</span><strong>80.00 USDC</strong>
-            </div>
-            <div class="example-progress" aria-hidden="true"><span></span></div>
-            <div class="example-bottom">
-              <span>Partially paid</span><span
-                >Each transfer stays traceable</span
-              >
-            </div>
-          </div>
-          <div class="example-footnote">
-            <Fingerprint size={18} /><span
-              >One reference. A clear payment trail.</span
+            <span class="preview-brand"
+              ><span class="mini-mark"><LogoMark /></span> Settlr</span
             >
+            <span class="preview-wallet"><span></span>0xe0a5…d13c</span>
+          </figcaption>
+          <div class="preview-layout">
+            <aside aria-hidden="true">
+              <strong>Workspace</strong>
+              <span class="active"><CircleDollarSign size={13} />Overview</span>
+              <span><Link2 size={13} />Requests</span>
+              <span><ReceiptText size={13} />Activity</span>
+            </aside>
+            <div class="preview-main">
+              <div class="preview-heading">
+                <div>
+                  <small>PAYMENT OVERVIEW</small>
+                  <h2>Track every settlement.</h2>
+                </div>
+                <span class="new-request"
+                  ><FilePlus2 size={13} />New request</span
+                >
+              </div>
+              <div class="preview-metrics">
+                <div>
+                  <small>Outstanding</small><strong
+                    >80.00 <span>USDC</span></strong
+                  >
+                </div>
+                <div>
+                  <small>Collected</small><strong
+                    >40.00 <span>USDC</span></strong
+                  >
+                </div>
+                <div>
+                  <small>Settled</small><strong>0 <span>of 1</span></strong>
+                </div>
+              </div>
+              <div class="preview-table">
+                <div class="table-label">
+                  <span>PAYMENT REQUEST</span><span>AMOUNT</span><span
+                    >STATUS</span
+                  >
+                </div>
+                <div class="table-row">
+                  <span class="request-cell"
+                    ><span class="request-icon"><Link2 size={13} /></span><span
+                      ><strong>Website audit</strong><small>INV-001</small
+                      ></span
+                    ></span
+                  >
+                  <strong>120.00 <small>USDC</small></strong><span
+                    class="status-partial">Partially paid</span
+                  >
+                </div>
+              </div>
+              <div class="matched-note">
+                <span class="match-check"><Check size={14} /></span><span
+                  ><strong>Payment matched</strong><small
+                    >40.00 USDC assigned to INV-001</small
+                  ></span
+                ><CheckCircle2 size={18} />
+              </div>
+            </div>
           </div>
         </figure>
+        <span class="illustrative-label">Illustrative product view</span>
       </div>
     </section>
 
     <section
-      class="workflow wrap section-reveal"
+      class="process-section wrap section-reveal"
       id="how-it-works"
-      aria-labelledby="workflow-title"
+      aria-labelledby="process-title"
     >
-      <div class="section-heading">
-        <p class="eyebrow">FROM REQUEST TO RECEIPT</p>
-        <h2 id="workflow-title">One link. Three simple steps.</h2>
+      <div class="section-heading centered">
+        <p class="eyebrow">A CLEAR PAYMENT PROCESS</p>
+        <h2 id="process-title">Built for work that ends in payment.</h2>
+        <p>
+          From the first request to the final receipt, each step keeps the
+          payment context intact.
+        </p>
       </div>
-      <div class="steps">
+      <div class="process-panel">
         <article>
-          <span class="step-number">01 <FilePlus2 size={21} /></span>
-          <h3>Create a request</h3>
-          <p>
-            Add a purpose and an amount in USDC. MemoMatch gives the request its
-            own payment reference.
-          </p>
+          <span class="step-number">01</span><FilePlus2 size={21} />
+          <h3>Create</h3>
+          <p>Set a public purpose, reference and USDC amount.</p>
         </article>
         <article>
-          <span class="step-number">02 <Link2 size={21} /></span>
-          <h3>Share the link</h3>
-          <p>
-            The payer reviews the details and sends USDC from their wallet
-            directly to yours.
-          </p>
+          <span class="step-number">02</span><Link2 size={21} />
+          <h3>Share</h3>
+          <p>Send one payment link with all essential details.</p>
         </article>
         <article>
-          <span class="step-number">03 <CheckCircle2 size={21} /></span>
-          <h3>See what’s settled</h3>
-          <p>
-            Verified transfers update the balance. Open the receipt to follow
-            each payment on Arc.
-          </p>
+          <span class="step-number">03</span><Fingerprint size={21} />
+          <h3>Match</h3>
+          <p>Assign supported transfers through their memo reference.</p>
+        </article>
+        <article class="process-highlight">
+          <span class="step-number">04</span><ReceiptText size={21} />
+          <h3>Prove</h3>
+          <p>Keep a receipt with each verified Arc transfer.</p>
+          <div class="receipt-slip">
+            <CheckCircle2 size={17} /><span
+              ><strong>120.00 USDC</strong><small>Verified settlement</small
+              ></span
+            >
+          </div>
         </article>
       </div>
     </section>
 
-    <section class="clarity-band">
-      <div class="wrap clarity section-reveal">
-        <div>
-          <p class="eyebrow">LESS GUESSWORK</p>
-          <h2>The same amount.<br />The right request.</h2>
-          <p class="clarity-intro">
-            Two requests can have the same amount. Their payment references keep
-            incoming transfers distinct.
+    <section class="feature-stack wrap" id="why-settlr">
+      <article class="feature-row section-reveal">
+        <div class="feature-copy">
+          <p class="eyebrow">UNIQUE REFERENCES</p>
+          <h2>Same amount.<br />Different request.</h2>
+          <p>
+            Each request receives its own payment reference. Incoming transfers
+            are matched by verifiable context instead of amount alone.
+          </p>
+          <ul>
+            <li><Check size={15} />Independent references for every request</li>
+            <li>
+              <Check size={15} />Private work labels stay in the workspace
+            </li>
+            <li>
+              <Check size={15} />Public details remain visible to the payer
+            </li>
+          </ul>
+        </div>
+        <div
+          class="feature-visual references-visual"
+          aria-label="Two payment requests with the same amount and different references"
+        >
+          <span class="visual-kicker">PAYMENT REQUESTS</span>
+          <div class="reference-card">
+            <span class="reference-icon"><Link2 size={16} /></span><span
+              ><strong>Website audit</strong><small>INV-001</small></span
+            ><strong>120.00 <small>USDC</small></strong>
+          </div>
+          <div class="reference-card secondary">
+            <span class="reference-icon"><Link2 size={16} /></span><span
+              ><strong>Design review</strong><small>INV-002</small></span
+            ><strong>120.00 <small>USDC</small></strong>
+          </div>
+          <div class="reference-result">
+            <Fingerprint size={17} /><span>Two distinct memo references</span
+            ><CheckCircle2 size={17} />
+          </div>
+        </div>
+      </article>
+
+      <article class="feature-row reverse section-reveal">
+        <div class="feature-copy">
+          <p class="eyebrow">PARTIAL PAYMENTS</p>
+          <h2>The balance updates with every verified transfer.</h2>
+          <p>
+            Part payments stay separate and the remaining amount stays visible.
+            The request reaches paid status only after verified funds cover the
+            total.
+          </p>
+          <ul>
+            <li>
+              <Check size={15} />Requested, received and remaining amounts
+            </li>
+            <li><Check size={15} />Clear partial and overpaid states</li>
+            <li><Check size={15} />No second payment starts automatically</li>
+          </ul>
+        </div>
+        <div
+          class="feature-visual partial-visual"
+          aria-label="Partial payment progress from 40 to 120 USDC"
+        >
+          <div class="balance-head">
+            <span>Amount remaining</span><strong
+              >80.00 <small>USDC</small></strong
+            >
+          </div>
+          <div class="balance-track"><span></span></div>
+          <div class="balance-labels">
+            <span>40.00 received</span><span>120.00 requested</span>
+          </div>
+          <div class="transfer-list">
+            <div>
+              <span class="match-check"><Check size={13} /></span><span
+                ><strong>Transfer verified</strong><small
+                  >Sep 18, 12:45 PM</small
+                ></span
+              ><strong>+25.00</strong>
+            </div>
+            <div>
+              <span class="match-check"><Check size={13} /></span><span
+                ><strong>Transfer verified</strong><small
+                  >Sep 18, 12:48 PM</small
+                ></span
+              ><strong>+15.00</strong>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="feature-row section-reveal">
+        <div class="feature-copy">
+          <p class="eyebrow">VERIFIABLE RECEIPTS</p>
+          <h2>Every verified transfer remains traceable.</h2>
+          <p>
+            A public receipt records the reference, total settled amount and
+            each verified transfer. Explorer links provide an independent path
+            back to Arc.
+          </p>
+          <ul>
+            <li>
+              <Check size={15} />One public record for the payment request
+            </li>
+            <li><Check size={15} />Separate payer, amount and block time</li>
+            <li><Check size={15} />Direct links to the Arc explorer</li>
+          </ul>
+        </div>
+        <div
+          class="feature-visual receipt-visual"
+          aria-label="Verified Settlr settlement receipt"
+        >
+          <div class="receipt-header">
+            <span><CheckCircle2 size={17} /> VERIFIED SETTLEMENT RECORD</span
+            ><ReceiptText size={20} />
+          </div>
+          <h3>Settlement receipt</h3>
+          <div class="receipt-summary">
+            <div>
+              <small>Payment reference</small><strong>0x2772…40bdd</strong>
+            </div>
+            <div><small>Total settled</small><strong>120.00 USDC</strong></div>
+          </div>
+          <div class="receipt-transfer">
+            <span><strong>0x0053…0298</strong><small>Sep 18, 2026</small></span
+            ><strong>120.00 USDC</strong><ExternalLink size={15} />
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="trust-section section-reveal">
+      <div class="wrap trust-inner">
+        <div class="section-heading centered light">
+          <p class="eyebrow">DESIGNED FOR PAYMENT PROOF</p>
+          <h2>Direct settlement. Verifiable context.</h2>
+          <p>
+            Settlr connects the payment request, Arc transfer and public receipt
+            without taking custody of funds.
           </p>
         </div>
-        <div class="benefits">
+        <div class="trust-facts">
           <article>
-            <Fingerprint size={21} />
-            <div>
-              <h3>A reference for every request</h3>
-              <p>
-                Match supported memo transfers to their request, without relying
-                on the amount alone.
-              </p>
-            </div>
+            <WalletCards size={22} />
+            <h3>Direct to the recipient</h3>
+            <p>
+              USDC moves from the payer wallet to the configured recipient
+              wallet.
+            </p>
           </article>
           <article>
-            <ReceiptText size={21} />
-            <div>
-              <h3>A balance that stays clear</h3>
-              <p>
-                Track partial payments and the remaining amount. Verified
-                transfers appear separately on the receipt, with explorer links.
-              </p>
-            </div>
+            <ShieldCheck size={22} />
+            <h3>No private key custody</h3>
+            <p>
+              Wallet confirmation remains the authorization point for every
+              payment.
+            </p>
           </article>
           <article>
-            <ShieldCheck size={21} />
-            <div>
-              <h3>Direct payments, clear boundaries</h3>
-              <p>
-                Funds go to the recipient wallet. Internal labels stay private;
-                payment details are visible to anyone with the link.
-              </p>
-            </div>
+            <Fingerprint size={22} />
+            <h3>Verified on Arc</h3>
+            <p>
+              Supported memo transfers are checked before they affect a request
+              balance.
+            </p>
           </article>
         </div>
+      </div>
+    </section>
+
+    <section
+      class="building wrap section-reveal"
+      aria-labelledby="building-title"
+    >
+      <div class="section-heading centered">
+        <p class="eyebrow">BUILDING A PAYMENT FLOW</p>
+        <h2 id="building-title">Use Settlr at the level that fits.</h2>
+        <p>
+          Start with the hosted flow or use the verification concepts in a
+          dedicated integration.
+        </p>
+      </div>
+      <div class="building-options">
+        <a href="/app?intent=create"
+          ><span class="option-icon"><Link2 size={22} /></span><span
+            ><strong>Hosted payment links</strong><small
+              >Create, share and track requests in the Settlr workspace.</small
+            ></span
+          ><ArrowUpRight size={18} /></a
+        >
+        <a href="/docs"
+          ><span class="option-icon"><Code2 size={22} /></span><span
+            ><strong>Integration documentation</strong><small
+              >Review the payment preparation and verification architecture.</small
+            ></span
+          ><ArrowUpRight size={18} /></a
+        >
+      </div>
+    </section>
+
+    <section class="final-cta wrap section-reveal">
+      <div class="final-preview" aria-hidden="true">
+        <div>
+          <span class="match-check"><Check size={13} /></span><span
+            ><strong>Request created</strong><small>Reference INV-001</small
+            ></span
+          >
+        </div>
+        <ArrowRight size={17} />
+        <div>
+          <span class="match-check"><Check size={13} /></span><span
+            ><strong>Payment matched</strong><small>Verified on Arc</small
+            ></span
+          >
+        </div>
+        <ArrowRight size={17} />
+        <div>
+          <span class="match-check"><Check size={13} /></span><span
+            ><strong>Receipt ready</strong><small>Public proof</small></span
+          >
+        </div>
+      </div>
+      <div class="final-copy">
+        <p class="eyebrow">FROM REQUEST TO RECEIPT</p>
+        <h2>Make the next USDC payment clear.</h2>
+        <a class="action-primary" href="/app?intent=create"
+          >Create payment request <ArrowRight size={17} /></a
+        >
       </div>
     </section>
 
     <section class="faq wrap section-reveal" aria-labelledby="faq-title">
       <div class="section-heading">
-        <p class="eyebrow">BEFORE GETTING STARTED</p>
-        <h2 id="faq-title">A few useful details.</h2>
+        <p class="eyebrow">USEFUL DETAILS</p>
+        <h2 id="faq-title">Before getting started.</h2>
       </div>
       <div class="faq-list">
-        <Disclosure id="faq-wallet" title="Which wallet do I need?"
-          >MemoMatch works with MetaMask and Rabby in supported desktop browsers
+        <Disclosure id="faq-wallet" title="Which wallet is supported?"
+          >Settlr works with MetaMask and Rabby in supported desktop browsers
           and mobile wallet browsers. Payers need USDC on the configured Arc
-          network, including enough to cover the network fee.</Disclosure
+          network and enough USDC to cover the network fee.</Disclosure
         >
         <Disclosure id="faq-signin" title="Does signing in make a payment?"
           >No. Signing in proves ownership of the wallet by signing a message.
           It does not send a transaction or cost a network fee. Payments require
-          a separate confirmation in the payer’s wallet.</Disclosure
+          a separate wallet confirmation.</Disclosure
         >
-        <Disclosure
-          id="faq-public"
-          title="What can someone with the payment link see?"
+        <Disclosure id="faq-public" title="Which information is public?"
           >The requester name, public purpose and reference, recipient wallet,
-          amounts, payment status and transfer receipts are public to anyone
-          with the link. The internal work label stays in the private workspace.</Disclosure
+          amounts, payment status and transfer receipts are visible to anyone
+          with the link. The internal work label remains private.</Disclosure
         >
         <Disclosure id="faq-fees" title="Are there network fees?"
           >Sending a payment requires an Arc network fee paid in USDC. The
-          wallet shows the fee before confirmation. Creating a payment request
-          does not send an onchain transaction.</Disclosure
+          wallet shows the fee before confirmation. Creating a request does not
+          send an onchain transaction.</Disclosure
         >
       </div>
     </section>
+  </main>
 
-    <section class="closing wrap section-reveal">
-      <div>
-        <p class="eyebrow">START WITH ONE REQUEST</p>
-        <h2>Make the next payment clear.</h2>
+  <footer class="site-footer">
+    <div class="wrap footer-top">
+      <div class="footer-brand">
+        <Brand />
+        <p>USDC payment requests with clear settlement records on Arc.</p>
       </div>
-      <a class="action-primary" href="/app?intent=create"
-        >Create payment request <ArrowRight size={18} /></a
-      >
-    </section>
-    <div class="developer-note wrap">
-      <span>Building your own payment flow?</span><a href="/docs"
-        >Explore the integration docs <ArrowUpRight size={15} /></a
+      <div>
+        <strong>Product</strong><a href="/app">Open app</a><a
+          href="#how-it-works">How it works</a
+        >
+      </div>
+      <div>
+        <strong>Developers</strong><a href="/docs">Documentation</a><a
+          href="/docs#verification">Verification</a
+        >
+      </div>
+      <div>
+        <strong>Network</strong><span>Arc {ARC_ENVIRONMENT}</span><span
+          >USDC payments</span
+        >
+      </div>
+    </div>
+    <div class="wrap footer-bottom">
+      <span>Settlr</span><span
+        >Payments go directly to the recipient wallet.</span
       >
     </div>
-  </main>
-  <footer class="wrap site-footer">
-    <Brand /><span>USDC payment requests on Arc</span><a href="/docs"
-      >Documentation</a
-    >
   </footer>
 </div>
 
 <style>
   .landing {
     color: #172238;
-    background: #f6f8fb;
+    background: #f8f8f5;
   }
   .wrap {
     width: calc(100% - 64px);
@@ -302,489 +543,1096 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 88px;
+    min-height: 78px;
     gap: 24px;
   }
   nav {
     display: flex;
     align-items: center;
-    gap: 30px;
-    font-size: 14px;
+    gap: 27px;
+    font-size: 13px;
     font-weight: 600;
   }
   nav a {
     color: #445269;
   }
-  nav a:hover,
-  .text-link:hover {
+  nav a:hover {
     color: #2454d6;
   }
   .nav-app {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 12px;
-    border: 1px solid #ccd5e3;
-    padding: 11px 17px;
+    gap: 8px;
+    padding: 10px 14px;
     border-radius: 8px;
-    background: white;
+    color: #fff;
+    background: #172238;
   }
-  .hero {
-    border-bottom: 1px solid #e2e7ef;
-  }
-  .hero-inner {
-    display: grid;
-    grid-template-columns: 1.15fr 1fr;
-    align-items: center;
-    gap: 64px;
-    padding-top: 80px;
-    padding-bottom: 94px;
+  .nav-app:hover {
+    color: #fff;
+    background: #2454d6;
   }
   .eyebrow {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
     color: #2454d6;
-    line-height: 1.6;
+    font-size: 10px;
+    font-weight: 750;
+    line-height: 1.5;
+    letter-spacing: 0.14em;
+  }
+  .hero {
+    display: block;
+    padding: 76px 0 100px;
+  }
+  .hero-copy {
+    max-width: 750px;
+    margin: 0 auto;
+    text-align: center;
   }
   h1 {
-    font-size: clamp(40px, 4.6vw, 64px);
+    margin-top: 18px;
+    font-size: clamp(46px, 6.3vw, 76px);
     font-weight: 650;
-    letter-spacing: -0.025em;
-    line-height: 1.08;
-    margin-top: 22px;
-  }
-  h1 span {
-    color: #2454d6;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
   }
   .hero-description {
-    font-size: 17px;
+    max-width: 600px;
+    margin: 25px auto 0;
     color: #596579;
-    line-height: 1.75;
-    max-width: 490px;
-    margin-top: 26px;
+    font-size: 17px;
+    line-height: 1.7;
   }
   .hero-actions {
     display: flex;
+    justify-content: center;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 22px;
-    margin-top: 30px;
+    gap: 10px;
+    margin-top: 28px;
   }
-  .text-link {
+  .action-primary,
+  .action-secondary {
     display: inline-flex;
-    gap: 8px;
     align-items: center;
-    font-weight: 600;
-    font-size: 14px;
+    justify-content: center;
+    gap: 9px;
+    min-height: 46px;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
   }
-  .wallet-support {
-    font-size: 12px;
-    color: #596579;
-    margin-top: 24px;
+  .action-primary {
+    color: #fff;
+    background: #2454d6;
+    box-shadow: 0 10px 24px rgba(36, 84, 214, 0.18);
   }
-  .environment {
+  .action-primary:hover {
+    background: #1d46b5;
+  }
+  .action-secondary {
+    color: #172238;
+    background: #fff;
+    border: 1px solid #d7dee9;
+  }
+  .action-secondary:hover {
+    border-color: #9eb1d0;
+  }
+  .hero-meta {
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: #596579;
-    margin-top: 7px;
-  }
-  .environment span {
-    color: #8793a6;
-  }
-  .product-example {
-    min-width: 0;
-  }
-  figcaption {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    color: #657288;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 18px;
+    color: #7a8799;
     font-size: 11px;
-    margin: 0 0 13px 4px;
   }
-  .example-dot {
-    width: 5px;
-    height: 5px;
-    background: #8793a6;
+  .meta-separator {
+    width: 3px;
+    height: 3px;
     border-radius: 50%;
+    background: #a8b1bf;
   }
-  .example-sheet {
-    background: white;
-    border: 1px solid #dbe3ef;
+  .product-stage {
+    position: relative;
+    min-height: 510px;
+    margin-top: 60px;
+    padding: 66px 78px 56px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: #bcd6ff;
+  }
+  .stage-orbit {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+  .orbit-one {
+    width: 560px;
+    height: 560px;
+    left: -130px;
+    top: -270px;
+  }
+  .orbit-two {
+    width: 510px;
+    height: 510px;
+    right: -170px;
+    bottom: -300px;
+  }
+  .workspace-preview {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 9px solid rgba(255, 255, 255, 0.7);
     border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 24px 60px -24px #17223824;
+    background: #fff;
+    box-shadow: 0 24px 70px rgba(23, 34, 56, 0.18);
   }
-  .example-top {
+  .workspace-preview figcaption {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    color: #596579;
-    font-size: 10px;
-    letter-spacing: 0.08em;
+    min-height: 52px;
+    padding: 0 20px;
+    border-bottom: 1px solid #e5eaf2;
+    font-size: 11px;
+    font-weight: 650;
   }
-  .example-top > span:first-child {
+  .preview-brand,
+  .preview-wallet {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mini-mark {
+    display: grid;
+    place-items: center;
+    width: 25px;
+    height: 25px;
+    border-radius: 7px;
+    overflow: hidden;
+    background: transparent;
+  }
+  .preview-wallet {
+    color: #596579;
+  }
+  .preview-wallet > span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2c9b70;
+  }
+  .preview-layout {
+    display: grid;
+    grid-template-columns: 155px 1fr;
+    min-height: 330px;
+  }
+  .preview-layout aside {
+    padding: 24px 15px;
+    border-right: 1px solid #e8edf4;
+    background: #fbfcfe;
+  }
+  .preview-layout aside strong {
+    display: block;
+    margin: 0 9px 12px;
+    color: #8a96a8;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .preview-layout aside > span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    padding: 8px 9px;
+    color: #657288;
+    border-radius: 6px;
+    font-size: 10px;
+  }
+  .preview-layout aside .active {
+    color: #2454d6;
+    background: #eaf0ff;
+    font-weight: 700;
+  }
+  .preview-main {
+    min-width: 0;
+    padding: 27px 31px;
+  }
+  .preview-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 15px;
+  }
+  .preview-heading small {
+    color: #2454d6;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+  }
+  .preview-heading h2 {
+    margin-top: 5px;
+    font-size: 22px;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+  .new-request {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    color: #fff;
+    border-radius: 6px;
+    background: #2454d6;
+    font-size: 9px;
+    font-weight: 700;
+  }
+  .preview-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: 24px;
+    padding: 15px 0;
+    border: 1px solid #e4e9f1;
+    border-radius: 8px;
+  }
+  .preview-metrics > div {
+    padding: 0 17px;
+    border-right: 1px solid #edf0f5;
+  }
+  .preview-metrics > div:last-child {
+    border: 0;
+  }
+  .preview-metrics small {
+    display: block;
+    color: #7f8a9d;
+    font-size: 8px;
+  }
+  .preview-metrics strong {
+    display: block;
+    margin-top: 5px;
+    font-size: 16px;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+  .preview-metrics strong span {
+    color: #8894a6;
+    font-size: 8px;
+    font-weight: 500;
+  }
+  .preview-table {
+    margin-top: 16px;
+    overflow: hidden;
+    border: 1px solid #e4e9f1;
+    border-radius: 8px;
+  }
+  .table-label,
+  .table-row {
+    display: grid;
+    grid-template-columns: 1fr 105px 105px;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+  }
+  .table-label {
+    color: #8c98aa;
+    border-bottom: 1px solid #e8edf4;
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+  .table-row {
+    font-size: 10px;
+  }
+  .request-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .request-cell > span:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .request-cell small,
+  .table-row > strong small {
+    color: #8c98aa;
+    font-size: 8px;
+    font-weight: 500;
+  }
+  .request-icon {
+    display: grid;
+    place-items: center;
+    width: 27px;
+    height: 27px;
+    border-radius: 6px;
+    color: #2454d6;
+    background: #eef3ff;
+  }
+  .status-partial {
+    justify-self: start;
+    padding: 4px 7px;
+    border-radius: 999px;
+    color: #9c670e;
+    background: #fff3dd;
+    font-size: 8px;
+    font-weight: 700;
+  }
+  .matched-note {
     display: flex;
     align-items: center;
     gap: 9px;
+    width: min(320px, 80%);
+    margin: 18px auto 0;
+    padding: 10px 12px;
+    border: 1px solid #cde8db;
+    border-radius: 8px;
+    background: #f1faf5;
   }
-  .reference {
-    font-family: var(--font-mono);
-    letter-spacing: 0;
-    color: #596579;
-  }
-  .example-requester {
-    margin-top: 31px;
-    font-size: 12px;
-    color: #596579;
-  }
-  .example-sheet h2 {
-    font-size: 24px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    margin-top: 6px;
-  }
-  .example-amount {
-    font-size: 48px;
-    line-height: 1.2;
-    font-weight: 600;
-    letter-spacing: -0.025em;
-    font-variant-numeric: tabular-nums;
-    margin-top: 19px;
-  }
-  .example-amount span {
-    font-size: 16px;
-    letter-spacing: 0;
-    font-weight: 500;
-    color: #596579;
-  }
-  .example-divider {
-    height: 1px;
-    background: #e8edf4;
-    margin: 27px 0 23px;
-  }
-  .matched-transfer {
+  .matched-note > span:nth-child(2) {
     display: flex;
-    align-items: center;
-    gap: 11px;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
   }
-  .match-icon {
+  .matched-note strong {
+    font-size: 9px;
+  }
+  .matched-note small {
+    color: #5d766a;
+    font-size: 8px;
+  }
+  .matched-note > :global(svg) {
+    color: #2c9b70;
+  }
+  .match-check {
     display: grid;
     place-items: center;
-    width: 30px;
-    height: 30px;
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    background: #e9f6ef;
     color: #237453;
-    flex-shrink: 0;
+    background: #dff4e9;
   }
-  .matched-transfer > div {
+  .illustrative-label {
+    position: relative;
+    z-index: 1;
+    display: block;
+    margin-top: 20px;
+    color: #33547f;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 650;
+  }
+  .process-section {
+    padding: 98px 0;
+  }
+  .section-heading.centered {
+    max-width: 650px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .section-heading h2,
+  .feature-copy h2,
+  .final-copy h2 {
+    margin-top: 12px;
+    font-size: clamp(32px, 4vw, 46px);
+    font-weight: 650;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+  }
+  .section-heading > p:last-child {
+    max-width: 590px;
+    margin: 18px auto 0;
+    color: #596579;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .process-panel {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 52px;
+    padding: 22px;
+    border-radius: 18px;
+    background: #edf3ff;
+  }
+  .process-panel article {
+    position: relative;
+    min-height: 270px;
+    padding: 24px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.82);
+  }
+  .process-panel article > :global(svg) {
+    margin-top: 38px;
+    color: #2454d6;
+  }
+  .step-number {
+    color: #7d8ca3;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+  }
+  .process-panel h3 {
+    margin-top: 17px;
+    font-size: 18px;
+    font-weight: 650;
+  }
+  .process-panel p {
+    margin-top: 8px;
+    color: #657288;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .process-highlight {
+    background: #fff !important;
+    box-shadow: 0 12px 35px rgba(36, 84, 214, 0.1);
+  }
+  .receipt-slip {
+    position: absolute;
+    right: 15px;
+    bottom: 16px;
+    left: 15px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px;
+    color: #237453;
+    border: 1px solid #d3eadf;
+    border-radius: 8px;
+    background: #f0faf5;
+  }
+  .receipt-slip > span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .receipt-slip strong {
+    font-size: 10px;
+  }
+  .receipt-slip small {
+    color: #6a8577;
+    font-size: 8px;
+  }
+  .feature-stack {
+    padding: 15px 0 105px;
+  }
+  .feature-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 95px;
+    padding: 90px 0;
+    border-top: 1px solid #e2e7ef;
+  }
+  .feature-row.reverse .feature-copy {
+    order: 2;
+  }
+  .feature-row.reverse .feature-visual {
+    order: 1;
+  }
+  .feature-copy h2 {
+    max-width: 500px;
+  }
+  .feature-copy > p:nth-of-type(2) {
+    max-width: 485px;
+    margin-top: 22px;
+    color: #596579;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+  .feature-copy ul {
+    display: grid;
+    gap: 0;
+    margin-top: 27px;
+  }
+  .feature-copy li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 0;
+    color: #445269;
+    border-top: 1px solid #e3e8ef;
+    font-size: 13px;
+  }
+  .feature-copy li :global(svg) {
+    flex: 0 0 auto;
+    color: #2454d6;
+  }
+  .feature-visual {
+    min-width: 0;
+    min-height: 430px;
+    padding: 45px;
+    border-radius: 18px;
+    background: #d8e7ff;
+  }
+  .visual-kicker {
+    display: block;
+    margin-bottom: 22px;
+    color: #58749b;
+    font-size: 9px;
+    font-weight: 750;
+    letter-spacing: 0.13em;
+  }
+  .references-visual {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .reference-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 19px;
+    border: 1px solid #dce4ef;
+    border-radius: 11px;
+    background: #fff;
+    box-shadow: 0 14px 35px rgba(23, 34, 56, 0.1);
+  }
+  .reference-card.secondary {
+    margin-top: 13px;
+    transform: translateX(22px);
+  }
+  .reference-card > span:nth-child(2) {
     display: flex;
     flex-direction: column;
     gap: 4px;
   }
-  .matched-transfer strong {
+  .reference-card strong {
     font-size: 13px;
-    font-weight: 650;
   }
-  .matched-transfer div > span {
-    font-size: 11px;
-    color: #596579;
-  }
-  .transfer-amount {
-    margin-left: auto;
-    color: #237453;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-  }
-  .transfer-amount small {
-    font-size: 10px;
+  .reference-card small {
+    color: #7e8a9c;
+    font-size: 9px;
     font-weight: 500;
   }
-  .remaining {
+  .reference-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    color: #2454d6;
+    background: #eef3ff;
+  }
+  .reference-result {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 24px auto 0;
+    padding: 9px 13px;
+    color: #2454d6;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .partial-visual {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #d9f0e7;
+  }
+  .balance-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .balance-head span {
+    color: #587168;
+    font-size: 11px;
+  }
+  .balance-head strong {
+    font-size: 43px;
+    font-weight: 650;
+    letter-spacing: -0.03em;
+  }
+  .balance-head small {
+    color: #6e837c;
+    font-size: 12px;
+  }
+  .balance-track {
+    height: 8px;
+    margin-top: 26px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.75);
+  }
+  .balance-track span {
+    display: block;
+    width: 33.333%;
+    height: 100%;
+    background: #2c9b70;
+  }
+  .balance-labels {
     display: flex;
     justify-content: space-between;
-    gap: 12px;
-    font-size: 12px;
-    margin-top: 31px;
+    margin-top: 9px;
+    color: #587168;
+    font-size: 9px;
   }
-  .remaining span {
-    color: #596579;
+  .transfer-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 29px;
   }
-  .remaining strong {
-    font-weight: 600;
+  .transfer-list > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.82);
   }
-  .example-progress {
-    height: 4px;
-    background: #edf1f7;
-    border-radius: 5px;
-    margin-top: 12px;
-    overflow: hidden;
+  .transfer-list div > span:nth-child(2) {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
   }
-  .example-progress span {
+  .transfer-list strong {
+    font-size: 10px;
+  }
+  .transfer-list small {
+    color: #71877d;
+    font-size: 8px;
+  }
+  .receipt-visual {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #e8e0ff;
+  }
+  .receipt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #5c45aa;
+  }
+  .receipt-header > span {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 8px;
+    font-weight: 750;
+    letter-spacing: 0.09em;
+  }
+  .receipt-visual h3 {
+    margin-top: 20px;
+    font-size: 23px;
+    font-weight: 650;
+  }
+  .receipt-summary {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    margin-top: 22px;
+    border-top: 1px solid rgba(92, 69, 170, 0.17);
+    border-bottom: 1px solid rgba(92, 69, 170, 0.17);
+  }
+  .receipt-summary > div {
+    padding: 18px 0;
+  }
+  .receipt-summary > div + div {
+    padding-left: 20px;
+    border-left: 1px solid rgba(92, 69, 170, 0.17);
+  }
+  .receipt-summary small,
+  .receipt-transfer small {
     display: block;
-    height: 100%;
-    width: 33.333%;
+    color: #786b9d;
+    font-size: 8px;
+  }
+  .receipt-summary strong {
+    display: block;
+    margin-top: 5px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+  .receipt-transfer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.75);
+  }
+  .receipt-transfer > span {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .receipt-transfer strong {
+    font-size: 10px;
+  }
+  .receipt-transfer > :global(svg) {
+    color: #5c45aa;
+  }
+  .trust-section {
+    padding: 95px 0;
+    color: #fff;
     background: #2454d6;
   }
-  .example-bottom {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    font-size: 10px;
-    color: #596579;
-    margin-top: 10px;
+  .section-heading.light .eyebrow {
+    color: #bfd1ff;
   }
-  .example-footnote {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    margin-top: 22px;
-    color: #596579;
-    font-size: 12px;
+  .section-heading.light > p:last-child {
+    color: #dce6ff;
   }
-  .example-footnote :global(svg) {
-    color: #2454d6;
-  }
-  .workflow {
-    padding-top: 85px;
-    padding-bottom: 90px;
-    scroll-margin-top: 24px;
-  }
-  .section-heading h2,
-  .clarity h2,
-  .closing h2 {
-    font-size: clamp(28px, 3.2vw, 40px);
-    font-weight: 600;
-    line-height: 1.18;
-    letter-spacing: -0.015em;
-    margin-top: 14px;
-  }
-  .steps {
+  .trust-facts {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 48px;
-    margin-top: 48px;
+    gap: 14px;
+    margin-top: 50px;
   }
-  .step-number {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    color: #2454d6;
-    font-size: 12px;
-    font-weight: 650;
-    padding-bottom: 18px;
-    border-bottom: 1px solid #d6dfed;
+  .trust-facts article {
+    padding: 29px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.08);
   }
-  .steps h3 {
-    font-size: 19px;
-    font-weight: 600;
-    margin: 23px 0 12px;
+  .trust-facts article :global(svg) {
+    color: #d7e4ff;
   }
-  .steps p,
-  .benefits p {
-    font-size: 15px;
-    line-height: 1.75;
-    color: #596579;
-  }
-  .clarity-band {
-    background: #eef2f8;
-    border-top: 1px solid #e2e7ef;
-    border-bottom: 1px solid #e2e7ef;
-  }
-  .clarity {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 100px;
-    padding-top: 80px;
-    padding-bottom: 80px;
-  }
-  .clarity-intro {
-    max-width: 390px;
-    margin-top: 22px;
-    font-size: 16px;
-    line-height: 1.75;
-    color: #596579;
-  }
-  .benefits {
-    display: grid;
-    gap: 30px;
-  }
-  .benefits article {
-    display: flex;
-    gap: 18px;
-  }
-  .benefits :global(svg) {
-    flex-shrink: 0;
-    margin-top: 3px;
-    color: #2454d6;
-  }
-  .benefits h3 {
+  .trust-facts h3 {
+    margin-top: 35px;
     font-size: 17px;
     font-weight: 650;
-    margin-bottom: 7px;
+  }
+  .trust-facts p {
+    margin-top: 10px;
+    color: #dce6ff;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .building {
+    padding: 100px 0;
+  }
+  .building-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    max-width: 860px;
+    margin: 45px auto 0;
+  }
+  .building-options a {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 110px;
+    padding: 22px;
+    border: 1px solid #dfe5ee;
+    border-radius: 12px;
+    background: #fff;
+  }
+  .building-options a:hover {
+    border-color: #9eb2d3;
+    box-shadow: 0 12px 32px rgba(23, 34, 56, 0.06);
+  }
+  .building-options a > span:nth-child(2) {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .building-options strong {
+    font-size: 15px;
+  }
+  .building-options small {
+    color: #68758a;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+  .building-options a > :global(svg) {
+    color: #7b8799;
+  }
+  .option-icon {
+    display: grid;
+    place-items: center;
+    width: 43px;
+    height: 43px;
+    flex: 0 0 auto;
+    border-radius: 10px;
+    color: #2454d6;
+    background: #edf3ff;
+  }
+  .final-cta {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: center;
+    gap: 70px;
+    padding: 72px;
+    border-radius: 18px;
+    background: #edf3ff;
+  }
+  .final-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .final-preview > div {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    padding: 13px;
+    border: 1px solid #dce4ef;
+    border-radius: 9px;
+    background: #fff;
+  }
+  .final-preview > div > span:nth-child(2) {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    white-space: nowrap;
+  }
+  .final-preview strong {
+    font-size: 9px;
+  }
+  .final-preview small {
+    color: #79869a;
+    font-size: 7px;
+  }
+  .final-preview > :global(svg) {
+    flex: 0 0 auto;
+    color: #8a98ab;
+  }
+  .final-copy .action-primary {
+    margin-top: 25px;
   }
   .faq {
     display: grid;
-    grid-template-columns: 0.85fr 1.15fr;
-    gap: 80px;
-    padding-top: 90px;
-    padding-bottom: 85px;
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: 85px;
+    padding: 105px 0;
   }
   .faq-list {
     border-bottom: 1px solid #e2e7ef;
   }
-  .closing {
-    border-top: 1px solid #dbe3ef;
-    padding-top: 55px;
-    padding-bottom: 55px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 28px;
-  }
-  .closing h2 {
-    font-size: 32px;
-  }
-  .developer-note {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    font-size: 13px;
-    color: #596579;
-    padding-bottom: 55px;
-  }
-  .developer-note a {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    color: #2454d6;
-    font-weight: 600;
-  }
   .site-footer {
-    border-top: 1px solid #e2e7ef;
-    padding-top: 26px;
-    padding-bottom: 30px;
-    display: flex;
-    align-items: center;
-    gap: 30px;
-    font-size: 12px;
-    color: #596579;
+    color: #dbe4f2;
+    background: #101d33;
   }
-  .site-footer > a {
-    margin-left: auto;
+  .footer-top {
+    display: grid;
+    grid-template-columns: 2fr repeat(3, 1fr);
+    gap: 70px;
+    padding-top: 70px;
+    padding-bottom: 62px;
   }
   .site-footer :global(.brand) {
-    font-size: 14px;
+    color: #fff;
   }
   .site-footer :global(.brand-mark) {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+    background: transparent;
   }
-  @media (max-width: 1000px) {
-    .hero-inner {
-      gap: 32px;
-      padding-top: 52px;
-      padding-bottom: 64px;
+  .footer-brand p {
+    max-width: 280px;
+    margin-top: 18px;
+    color: #9cabc0;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .footer-top > div:not(.footer-brand) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 12px;
+  }
+  .footer-top strong {
+    margin-bottom: 5px;
+    color: #fff;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .footer-top a,
+  .footer-top span {
+    color: #9cabc0;
+  }
+  .footer-top a:hover {
+    color: #fff;
+  }
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    padding-top: 20px;
+    padding-bottom: 25px;
+    color: #7f90a8;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 11px;
+  }
+  @media (max-width: 920px) {
+    .product-stage {
+      padding: 50px 35px 42px;
     }
-    .example-sheet {
-      padding: 24px;
+    .process-panel {
+      grid-template-columns: repeat(2, 1fr);
     }
-    .hero-actions {
-      gap: 17px;
+    .feature-row {
+      gap: 50px;
     }
-    .clarity {
-      gap: 55px;
+    .feature-visual {
+      min-height: 390px;
+      padding: 32px;
     }
-    .faq {
-      gap: 45px;
+    .final-cta {
+      grid-template-columns: 1fr;
+      gap: 42px;
+      padding: 52px;
     }
-    .steps {
-      gap: 28px;
+    .footer-top {
+      grid-template-columns: 1.6fr repeat(3, 1fr);
+      gap: 35px;
     }
   }
-  @media (max-width: 760px) {
+  @media (max-width: 720px) {
     .wrap {
       width: calc(100% - 40px);
     }
     .site-header {
-      height: 76px;
-      gap: 14px;
+      min-height: 72px;
     }
     nav {
-      gap: 16px;
-      font-size: 13px;
+      gap: 15px;
     }
     .desktop-link {
       display: none;
     }
     .nav-app {
-      gap: 6px;
-      padding: 9px 12px;
+      padding: 9px 11px;
     }
-    .hero-inner {
-      grid-template-columns: 1fr;
-      gap: 42px;
-      padding-top: 40px;
-      padding-bottom: 50px;
+    .hero {
+      padding: 55px 0 70px;
     }
     h1 {
-      font-size: clamp(39px, 7vw, 54px);
+      font-size: clamp(42px, 12vw, 62px);
     }
     .hero-description {
-      font-size: 16px;
+      font-size: 15px;
     }
-    .product-example {
+    .product-stage {
+      min-height: auto;
+      margin-top: 45px;
+      padding: 28px 18px 30px;
+      border-radius: 16px;
+    }
+    .workspace-preview {
+      border-width: 6px;
+    }
+    .preview-layout {
+      grid-template-columns: 1fr;
+      min-height: auto;
+    }
+    .preview-layout aside {
+      display: none;
+    }
+    .preview-main {
+      padding: 21px 18px;
+    }
+    .preview-heading h2 {
+      font-size: 17px;
+    }
+    .new-request {
+      display: none;
+    }
+    .preview-metrics > div {
+      padding: 0 9px;
+    }
+    .preview-metrics strong {
+      font-size: 12px;
+    }
+    .table-label,
+    .table-row {
+      grid-template-columns: 1fr 78px;
+    }
+    .table-label span:last-child,
+    .status-partial {
+      display: none;
+    }
+    .matched-note {
       width: 100%;
-      max-width: 480px;
-      justify-self: center;
     }
-    .workflow {
-      padding: 55px 0;
+    .process-section {
+      padding: 70px 0;
     }
-    .steps {
+    .process-panel {
       grid-template-columns: 1fr;
-      gap: 28px;
-      margin-top: 30px;
+      padding: 14px;
     }
-    .steps h3 {
-      margin: 15px 0 8px;
+    .process-panel article {
+      min-height: 220px;
     }
-    .clarity {
+    .feature-stack {
+      padding-bottom: 65px;
+    }
+    .feature-row,
+    .feature-row.reverse {
       grid-template-columns: 1fr;
-      gap: 36px;
-      padding: 55px 0;
+      gap: 35px;
+      padding: 65px 0;
+    }
+    .feature-row.reverse .feature-copy,
+    .feature-row.reverse .feature-visual {
+      order: initial;
+    }
+    .feature-visual {
+      min-height: 370px;
+      padding: 27px;
+    }
+    .reference-card.secondary {
+      transform: none;
+    }
+    .trust-section {
+      padding: 70px 0;
+    }
+    .trust-facts {
+      grid-template-columns: 1fr;
+    }
+    .building {
+      padding: 70px 0;
+    }
+    .building-options {
+      grid-template-columns: 1fr;
+    }
+    .final-cta {
+      width: calc(100% - 40px);
+      padding: 38px 25px;
+    }
+    .final-preview {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .final-preview > :global(svg) {
+      transform: rotate(90deg);
+      align-self: center;
     }
     .faq {
       grid-template-columns: 1fr;
-      gap: 32px;
-      padding: 55px 0;
+      gap: 35px;
+      padding: 75px 0;
     }
-    .closing {
-      align-items: flex-start;
+    .footer-top {
+      grid-template-columns: 1fr 1fr;
+      gap: 42px 25px;
+      padding-top: 55px;
+    }
+    .footer-brand {
+      grid-column: 1 / -1;
+    }
+    .footer-bottom {
       flex-direction: column;
-      padding: 40px 0;
-    }
-    .developer-note {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 7px;
-      padding-bottom: 40px;
-    }
-    .site-footer {
-      flex-wrap: wrap;
-      gap: 18px;
-    }
-    .site-footer > span {
-      display: none;
     }
   }
-  @media (max-width: 380px) {
+  @media (max-width: 390px) {
     .site-header :global(.brand) {
       font-size: 14px;
       gap: 8px;
@@ -793,14 +1641,48 @@
       width: 32px;
       height: 32px;
     }
-    nav {
-      gap: 11px;
+    nav > a:first-of-type {
+      display: none;
     }
-    .example-sheet {
-      padding: 20px;
+    .action-primary,
+    .action-secondary {
+      width: 100%;
     }
-    .example-bottom {
-      font-size: 9px;
+    .workspace-preview figcaption {
+      padding: 0 12px;
+    }
+    .preview-wallet {
+      display: none;
+    }
+    .preview-metrics {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .preview-metrics > div:nth-child(3) {
+      display: none;
+    }
+    .preview-metrics > div:nth-child(2) {
+      border: 0;
+    }
+    .feature-visual {
+      min-height: 340px;
+      padding: 22px;
+    }
+    .reference-card {
+      padding: 14px;
+    }
+    .receipt-summary {
+      grid-template-columns: 1fr;
+    }
+    .receipt-summary > div + div {
+      padding-left: 0;
+      border-left: 0;
+      border-top: 1px solid rgba(92, 69, 170, 0.17);
+    }
+    .footer-top {
+      grid-template-columns: 1fr;
+    }
+    .footer-brand {
+      grid-column: auto;
     }
   }
 </style>
