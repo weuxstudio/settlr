@@ -22,6 +22,52 @@
   import Disclosure from '$lib/components/Disclosure.svelte';
   import { ARC_ENVIRONMENT } from '$lib/config';
   import { legacyWorkspaceTarget } from '$lib/client/workspace';
+  import { demoRequests, demoStats } from '$lib/demo-data';
+  import { deriveStatus } from '$core/index';
+  import { parseUsdc } from '$lib/format';
+
+  const previewStatusClass: Record<string, string> = {
+    Open: 'status-open',
+    'Partially paid': 'status-partial',
+    Paid: 'status-paid',
+    Overpaid: 'status-paid'
+  };
+
+  function previewStatus(request: (typeof demoRequests)[number]) {
+    return deriveStatus(
+      BigInt(parseUsdc(request.amount)),
+      BigInt(parseUsdc(request.paid))
+    );
+  }
+
+  function previewDue(value?: string) {
+    if (!value) return 'No due date';
+    return new Intl.DateTimeFormat('en', {
+      month: 'short',
+      day: 'numeric'
+    }).format(new Date(`${value}T12:00:00`));
+  }
+
+  function previewDate(value: string) {
+    return new Intl.DateTimeFormat('en', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'UTC'
+    }).format(new Date(value));
+  }
+
+  function shortAddress(value: string) {
+    return `${value.slice(0, 6)}…${value.slice(-4)}`;
+  }
+
+  const previewPayments = demoRequests
+    .flatMap((request) =>
+      request.payments.map((payment) => ({ request, payment }))
+    )
+    .sort((a, b) => b.payment.blockNumber - a.payment.blockNumber);
+
+  const previewWallet = shortAddress(demoRequests[0].recipient);
 
   let root: HTMLDivElement;
   onMount(() => {
@@ -121,7 +167,7 @@
 
       <div
         class="product-stage hero-reveal"
-        aria-label="Illustrative Settlr workspace preview"
+        aria-label="Settlr workspace preview with values from the verified Arc mainnet settlements"
       >
         <div class="stage-orbit orbit-one"></div>
         <div class="stage-orbit orbit-two"></div>
@@ -129,29 +175,29 @@
           <figcaption>
             <span class="preview-brand"><span class="mini-mark"><LogoMark /></span> Settlr</span>
             <nav class="preview-nav" aria-label="Illustrative workspace navigation"><span class="active">Requests</span><span>Activity</span><span>Documentation</span></nav>
-            <span class="preview-actions"><span class="preview-network"><span></span>Arc mainnet</span><span class="preview-wallet"><span></span>0xe005…0298 <span class="chevron">⌄</span></span></span>
+            <span class="preview-actions"><span class="preview-network"><span></span>Arc mainnet</span><span class="preview-wallet"><span></span>{previewWallet} <span class="chevron">⌄</span></span></span>
           </figcaption>
           <div class="preview-main">
             <div class="preview-heading"><div><h2>Payment overview</h2><p>Track payment requests and verified USDC settlements on Arc.</p></div><span class="new-request"><FilePlus2 size={13} />New request</span></div>
             <div class="preview-metrics">
-              <div><small>Outstanding</small><strong>0.00 <span>USDC</span></strong><em>Awaiting settlement</em></div>
-              <div><small>Collected</small><strong>3.50 <span>USDC</span></strong><em class="verified">✓ Verified on Arc</em></div>
-              <div><small>Settled requests</small><strong>1 <span>of 4</span></strong><em>This workspace</em></div>
-              <div><small>Avg. settlement</small><strong>3m</strong><em>From request to final</em></div>
+              <div><small>Outstanding</small><strong>{demoStats.outstanding} <span>USDC</span></strong><em>Awaiting settlement</em></div>
+              <div><small>Collected</small><strong>{demoStats.collected} <span>USDC</span></strong><em class="verified">✓ Verified on Arc</em></div>
+              <div><small>Settled requests</small><strong>{demoStats.paidCount} <span>of {demoRequests.length}</span></strong><em>This workspace</em></div>
+              <div><small>Avg. settlement</small><strong>{demoStats.averageSettlement}</strong><em>From request to final</em></div>
             </div>
             <div class="preview-refresh"><span><i></i>Arc mainnet</span><span>Data refreshed just now</span></div>
             <div class="preview-list-heading"><div><h3>Payment requests</h3><p>Review balances, due dates and settlement progress.</p></div><span class="preview-tools">⌕ Search&nbsp;&nbsp; <b>All⌄</b> <b>⇩ CSV</b></span></div>
             <div class="preview-table">
               <div class="table-label"><span>REQUEST</span><span>REQUESTED</span><span>RECEIVED</span><span>STATUS</span><span>DUE</span></div>
-              <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>Website audit, Sept. 2026</strong><small>Reference INV-2026-26-005</small></span></span><strong>3.50 <small>USDC</small></strong><strong>3.50 <small>USDC</small></strong><span class="status-paid">● Paid</span><span class="due">Oct 1</span></div>
-              <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>Arc integration sprint</strong><small>Reference INV-2026-26-004</small></span></span><strong>12.00 <small>USDC</small></strong><strong>7.00 <small>USDC</small></strong><span class="status-partial">● Partially paid</span><span class="due">Sep 28</span></div>
-              <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>Design system review</strong><small>Reference INV-2026-26-003</small></span></span><strong>8.00 <small>USDC</small></strong><strong>0.00 <small>USDC</small></strong><span class="status-open">● Open</span><span class="due">Sep 30</span></div>
-              <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>Mainnet workshop</strong><small>Reference INV-2026-26-002</small></span></span><strong>24.00 <small>USDC</small></strong><strong>24.00 <small>USDC</small></strong><span class="status-paid">● Paid</span><span class="due">Sep 22</span></div>
+              {#each demoRequests as request (request.id)}
+                {@const status = previewStatus(request)}
+                <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>{request.title}</strong><small>Reference {request.publicReference}</small></span></span><strong>{request.amount} <small>USDC</small></strong><strong>{request.paid} <small>USDC</small></strong><span class={previewStatusClass[status]}>● {status}</span><span class="due">{previewDue(request.dueDate)}</span></div>
+              {/each}
             </div>
-            <div class="preview-activity"><div><h3>Settlement activity</h3><p>The latest verified payment events.</p></div><span class="activity-spark">⌁</span><div class="activity-row"><span class="match-check"><Check size={12} /></span><span><strong>Website audit, Sept. 2026</strong><small>Sep 21, 2026 · 0xe0a5…d13c · Arc transaction ↗</small></span><b>+3.50 USDC</b></div></div>
+            <div class="preview-activity"><div><h3>Settlement activity</h3><p>The latest verified payment events.</p></div><span class="activity-spark">⌁</span>{#each previewPayments as { request, payment } (payment.id)}<div class="activity-row"><span class="match-check"><Check size={12} /></span><span><strong>{request.title}</strong><small>{previewDate(payment.receivedAt)} · {shortAddress(payment.payer)} · <a href={payment.explorerUrl} target="_blank" rel="noreferrer">Arc transaction ↗</a></small></span><b>+{payment.amount} USDC</b></div>{/each}</div>
           </div>
         </figure>
-        <span class="illustrative-label">Illustrative product view</span>
+        <span class="illustrative-label">Interface preview, values from the two verified Arc mainnet settlements</span>
       </div>
     </section>
 
@@ -960,6 +1006,12 @@
   .activity-row small {
     color: #7b889a;
     font-size: 7px;
+  }
+  .activity-row small a {
+    color: #2454d6;
+    font-weight: 650;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
   .activity-row b {
     color: #27805d;

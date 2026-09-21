@@ -8,6 +8,11 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    env:
+      # $env/static/public is resolved at build time, so the two values the app
+      # imports must be present here as well, otherwise the build step fails.
+      PUBLIC_ARC_NETWORK: mainnet
+      PUBLIC_ARC_RPC_URL: https://rpc.mainnet.arc.io
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
