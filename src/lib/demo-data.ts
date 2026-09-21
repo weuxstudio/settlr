@@ -7,17 +7,48 @@
 //     https://explorer.arc.io/tx/0xf9cb51fe20c32f02f2a10ef1f9a1ac984e83350e2c88c65d258a032656ef0f03
 //   block 22005266, 2026 09 21 11:56:38 UTC, 1.50 USDC, full settlement, memo tag settlr:v1
 //     https://explorer.arc.io/tx/0xaedc5b0392164cd655be7aa2d0785e8d0cc67bd4aba5a9cf69b456b6bac873b2
+//   block 22011190, 2026 09 21 12:46:44 UTC, 5.00 USDC of 33.65, part payment, memo tag settlr:v1
+//     https://explorer.arc.io/tx/0x3ca832f46977b3109601e22eabf8c8c464a47c44953bb28e65fef59c1326a9c5
 //
-// All three carry a memo reference to the Arc Memo contract and were verified by
+// All four carry a memo reference to the Arc Memo contract and were verified by
 // the same module the running app uses. Payment times and on chain values are
 // taken from those transactions. The creation times of the two older requests
-// are placeholders, the creation time of the Willow Labs request is the real one.
+// are placeholders. The Willow Labs and Liquid Solution Studios requests use the
+// creation times, tokens and public fields returned by the running app.
 // Requests without a payment record stay open and claim nothing.
 import { deriveStatus } from '$core/index';
 import { formatUsdcBaseUnits, parseUsdc } from '$lib/format';
 import type { DashboardStats, PaymentRequest } from './types';
 
 export const demoRequests: PaymentRequest[] = [
+  {
+    id: 'req_9af72d',
+    token: '0x9af72d21d82e0cb6a95aa6430492c33ee09ab000231f36f28e62bbcacf2b8a01',
+    memoId:
+      '0xcc02f26ea318817338dbae0ce2660b9b563d255a60a25bfc0a76479c7aebff8e',
+    title: 'Website Redesign',
+    publicDescription: 'Website Redesign',
+    requesterName: 'Liquid Solution Studios',
+    amount: '33.65',
+    paid: '5.00',
+    recipient: '0xe0a52194a79da1c44ed14167c2ee0b8f934dd13c',
+    createdAt: '2026-09-21T12:46:09.000Z',
+    payments: [
+      {
+        id: 'payment_4',
+        amount: '5.00',
+        payer: '0x0053f2e91ab1c70f72048e6e27ba884156dc0298',
+        transactionHash:
+          '0x3ca832f46977b3109601e22eabf8c8c464a47c44953bb28e65fef59c1326a9c5',
+        logIndex: 35,
+        blockNumber: 22011190,
+        receivedAt: '2026-09-21T12:46:44.000Z',
+        explorerUrl:
+          'https://explorer.arc.io/tx/0x3ca832f46977b3109601e22eabf8c8c464a47c44953bb28e65fef59c1326a9c5',
+        verification: 'verified'
+      }
+    ]
+  },
   {
     id: 'req_7d2f10',
     token: 'pay_demo_7d2f10',

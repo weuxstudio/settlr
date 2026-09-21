@@ -20,7 +20,7 @@
   import FooterBrand from '$lib/components/FooterBrand.svelte';
   import LogoMark from '$lib/components/LogoMark.svelte';
   import Disclosure from '$lib/components/Disclosure.svelte';
-  import { ARC_ENVIRONMENT } from '$lib/config';
+  import { ARC_ENVIRONMENT, shortenAddress } from '$lib/config';
   import { legacyWorkspaceTarget } from '$lib/client/workspace';
   import { demoRequests, demoStats } from '$lib/demo-data';
   import { deriveStatus } from '$core/index';
@@ -57,8 +57,10 @@
     }).format(new Date(value));
   }
 
-  function shortAddress(value: string) {
-    return `${value.slice(0, 6)}…${value.slice(-4)}`;
+  function previewReference(request: (typeof demoRequests)[number]) {
+    return request.publicReference?.trim()
+      ? request.publicReference
+      : shortenAddress(request.token, 8, 6);
   }
 
   const previewPayments = demoRequests
@@ -67,7 +69,7 @@
     )
     .sort((a, b) => b.payment.blockNumber - a.payment.blockNumber);
 
-  const previewWallet = shortAddress(demoRequests[0].recipient);
+  const previewWallet = shortenAddress(demoRequests[0].recipient);
 
   let root: HTMLDivElement;
   onMount(() => {
@@ -191,13 +193,13 @@
               <div class="table-label"><span>REQUEST</span><span>REQUESTED</span><span>RECEIVED</span><span>STATUS</span><span>DUE</span></div>
               {#each demoRequests as request (request.id)}
                 {@const status = previewStatus(request)}
-                <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>{request.title}</strong><small>Reference {request.publicReference}</small></span></span><strong>{request.amount} <small>USDC</small></strong><strong>{request.paid} <small>USDC</small></strong><span class={previewStatusClass[status]}>● {status}</span><span class="due">{previewDue(request.dueDate)}</span></div>
+                <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>{request.title}</strong><small>Reference {previewReference(request)}</small></span></span><strong>{request.amount} <small>USDC</small></strong><strong>{request.paid} <small>USDC</small></strong><span class={previewStatusClass[status]}>● {status}</span><span class="due">{previewDue(request.dueDate)}</span></div>
               {/each}
             </div>
-            <div class="preview-activity"><div><h3>Settlement activity</h3><p>The latest verified payment events.</p></div><span class="activity-spark">⌁</span>{#each previewPayments as { request, payment } (payment.id)}<div class="activity-row"><span class="match-check"><Check size={12} /></span><span><strong>{request.title}</strong><small>{previewDate(payment.receivedAt)} · {shortAddress(payment.payer)} · <a href={payment.explorerUrl} target="_blank" rel="noreferrer">Arc transaction ↗</a></small></span><b>+{payment.amount} USDC</b></div>{/each}</div>
+            <div class="preview-activity"><div><h3>Settlement activity</h3><p>The latest verified payment events.</p></div><span class="activity-spark">⌁</span>{#each previewPayments as { request, payment } (payment.id)}<div class="activity-row"><span class="match-check"><Check size={12} /></span><span><strong>{request.title}</strong><small>{previewDate(payment.receivedAt)} · {shortenAddress(payment.payer)} · <a href={payment.explorerUrl} target="_blank" rel="noreferrer">Arc transaction ↗</a></small></span><b>+{payment.amount} USDC</b></div>{/each}</div>
           </div>
         </figure>
-        <span class="illustrative-label">Interface preview, values from the three verified Arc mainnet settlements</span>
+        <span class="illustrative-label">Interface preview, values from the four verified Arc mainnet settlements</span>
       </div>
     </section>
 
