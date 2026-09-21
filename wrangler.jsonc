@@ -7,7 +7,7 @@
   "vars": {
     "ARC_NETWORK": "mainnet",
     "ARC_RPC_URL": "https://rpc.mainnet.arc.io",
-    "PAYMENTS_ENABLED": "false"
+    "PAYMENTS_ENABLED": "true"
   },
   "assets": {
     "binding": "ASSETS",
