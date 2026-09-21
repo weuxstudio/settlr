@@ -763,7 +763,7 @@
         </nav>
         <div class="flex items-center gap-2.5">
           {#if walletAddress}
-            <NetworkBadge compact />
+            <NetworkBadge network={ARC_ENVIRONMENT} compact />
             <div class="relative">
               <button
                 class="btn btn-sm h-10 gap-2 rounded-lg border-[#dce3ee] bg-white px-3 font-medium text-[#33415b] shadow-none hover:border-[#bdc9dd]"

@@ -20,7 +20,7 @@
     XCircle
   } from 'lucide-svelte';
   import { formatDate, formatUsdcBaseUnits, parseUsdc } from '$lib/format';
-  import { ARC_EXPLORER_URL, shortenAddress } from '$lib/config';
+  import { ARC_ENVIRONMENT, ARC_EXPLORER_URL, shortenAddress } from '$lib/config';
   import NetworkBadge from '$lib/components/NetworkBadge.svelte';
   import StatusChip from '$lib/components/StatusChip.svelte';
   import Brand from '$lib/components/Brand.svelte';
@@ -590,7 +590,7 @@
     <header class="flex items-center justify-between gap-4">
       <Brand />
       <div class="flex items-center gap-2">
-        <NetworkBadge network={request?.network ?? 'testnet'} compact />
+        <NetworkBadge network={request?.network ?? ARC_ENVIRONMENT} compact />
         {#if isRecipientOwner}
           <a
             href="/app#requests"
@@ -1350,7 +1350,7 @@
       class="mt-8 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-[11px] text-[#6f7e95]"
     >
       <span>Powered by Settlr</span><span aria-hidden="true">•</span><span
-        >Arc {request?.network ?? 'testnet'}</span
+        >Arc {request?.network ?? ARC_ENVIRONMENT}</span
       ><span aria-hidden="true">•</span><a
         href="/docs"
         class="underline decoration-[#cbd5e5] underline-offset-2"

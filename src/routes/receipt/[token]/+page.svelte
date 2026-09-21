@@ -10,7 +10,7 @@
     Printer
   } from 'lucide-svelte';
   import { formatDate, formatUsdcBaseUnits } from '$lib/format';
-  import { shortenAddress } from '$lib/config';
+  import { ARC_ENVIRONMENT, shortenAddress } from '$lib/config';
   import NetworkBadge from '$lib/components/NetworkBadge.svelte';
   import Brand from '$lib/components/Brand.svelte';
   import type { PaymentRequest, PaymentStatus } from '$lib/types';
@@ -215,7 +215,7 @@
             <h2 class="text-sm font-semibold text-[#33415b]">
               Verified transfers
             </h2>
-            <NetworkBadge network={request.network ?? 'testnet'} compact />
+            <NetworkBadge network={request.network ?? ARC_ENVIRONMENT} compact />
           </div>
           <div class="mt-4 overflow-hidden rounded-lg border border-[#e3e8f0]">
             <div

@@ -1,5 +1,10 @@
 import type { D1Database, Fetcher, R2Bucket } from '@cloudflare/workers-types';
 
+declare module '$env/static/public' {
+  export const PUBLIC_ARC_NETWORK: string | undefined;
+  export const PUBLIC_ARC_RPC_URL: string | undefined;
+}
+
 declare global {
   namespace App {
     interface Platform {
