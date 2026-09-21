@@ -17,7 +17,7 @@
     {
       "binding": "DB",
       "database_name": "memomatch-testnet",
-      "database_id": "replace-with-cloudflare-testnet-d1-id",
+      "database_id": "13abd5e5-6d67-49f4-9911-bafe8e97e4d9",
       "migrations_dir": "migrations"
     }
   ]
