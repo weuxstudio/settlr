@@ -18,6 +18,7 @@
     WalletCards
   } from 'lucide-svelte';
   import Brand from '$lib/components/Brand.svelte';
+  import FooterBrand from '$lib/components/FooterBrand.svelte';
   import LogoMark from '$lib/components/LogoMark.svelte';
   import Disclosure from '$lib/components/Disclosure.svelte';
   import { ARC_ENVIRONMENT } from '$lib/config';
@@ -502,7 +503,7 @@
   <footer class="site-footer">
     <div class="wrap footer-top">
       <div class="footer-brand">
-        <Brand />
+        <FooterBrand />
         <p>USDC payment requests with clear settlement records on Arc.</p>
       </div>
       <div>
@@ -1427,12 +1428,6 @@
     padding-top: 70px;
     padding-bottom: 62px;
   }
-  .site-footer :global(.brand) {
-    color: #fff;
-  }
-  .site-footer :global(.brand-mark) {
-    background: transparent;
-  }
   .footer-brand p {
     max-width: 280px;
     margin-top: 18px;
@@ -1638,8 +1633,8 @@
       gap: 8px;
     }
     .site-header :global(.brand-mark) {
-      width: 32px;
       height: 32px;
+      width: auto;
     }
     nav > a:first-of-type {
       display: none;

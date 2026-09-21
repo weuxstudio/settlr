@@ -15,7 +15,7 @@
   } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { ARC_MEMO_ADDRESS, ARC_USDC_ADDRESS } from '$lib/config';
-  import LogoMark from '$lib/components/LogoMark.svelte';
+  import Brand from '$lib/components/Brand.svelte';
 
   const integrationExample = `import { createPublicClient, http } from 'viem';
 import { arcTestnet } from 'viem/chains';
@@ -182,11 +182,7 @@ const status = deriveStatus(
 >
   <div class="mx-auto max-w-[1120px]">
     <header class="flex items-center justify-between gap-4">
-      <a href="/" class="flex items-center gap-2.5 text-sm font-semibold"
-        ><span class="grid h-8 w-8 place-items-center rounded-[9px]"
-          ><LogoMark /></span
-        >Settlr</a
-      >
+      <Brand />
       <a
         href="/app"
         class="btn btn-ghost btn-sm gap-2 rounded-lg text-[#596579]"

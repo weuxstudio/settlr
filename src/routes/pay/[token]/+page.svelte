@@ -23,7 +23,7 @@
   import { ARC_EXPLORER_URL, shortenAddress } from '$lib/config';
   import NetworkBadge from '$lib/components/NetworkBadge.svelte';
   import StatusChip from '$lib/components/StatusChip.svelte';
-  import LogoMark from '$lib/components/LogoMark.svelte';
+  import Brand from '$lib/components/Brand.svelte';
   import {
     connectWallet,
     inspectMemoPayment,
@@ -588,13 +588,7 @@
 >
   <div class="mx-auto max-w-[1080px]">
     <header class="flex items-center justify-between gap-4">
-      <a href="/" class="flex items-center gap-2.5 text-sm font-semibold">
-        <span
-          class="grid h-9 w-9 place-items-center rounded-[10px] shadow-[0_7px_16px_rgba(23,34,56,0.14)]"
-          ><LogoMark /></span
-        >
-        <span>Settlr</span>
-      </a>
+      <Brand />
       <div class="flex items-center gap-2">
         <NetworkBadge network={request?.network ?? 'testnet'} compact />
         {#if isRecipientOwner}

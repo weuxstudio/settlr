@@ -12,7 +12,7 @@
   import { formatDate, formatUsdcBaseUnits } from '$lib/format';
   import { shortenAddress } from '$lib/config';
   import NetworkBadge from '$lib/components/NetworkBadge.svelte';
-  import LogoMark from '$lib/components/LogoMark.svelte';
+  import Brand from '$lib/components/Brand.svelte';
   import type { PaymentRequest, PaymentStatus } from '$lib/types';
 
   type PublicReceipt = {
@@ -68,11 +68,7 @@
 >
   <div class="mx-auto max-w-[760px]">
     <div class="flex items-center justify-between print:hidden">
-      <a href="/" class="flex items-center gap-2.5 text-sm font-semibold"
-        ><span class="grid h-8 w-8 place-items-center rounded-[9px]"
-          ><LogoMark /></span
-        >Settlr</a
-      >
+      <Brand />
       <div class="flex gap-2">
         <button
           class="btn btn-ghost btn-sm gap-2 rounded-lg text-[#596579]"

@@ -1,4 +1,4 @@
-<img src="/settlr-logo.svg" alt="" aria-hidden="true" />
+<img src="/settlr-nav-mark.svg" alt="" aria-hidden="true" />
 
 <style>
   img {
