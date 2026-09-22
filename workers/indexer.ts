@@ -47,7 +47,8 @@ export default {
           env.ARC_RPC_URL ??
             (isTestnet
               ? 'https://rpc.testnet.arc.io'
-              : 'https://rpc.mainnet.arc.io')
+              : 'https://rpc.mainnet.arc.io'),
+          { timeout: 10_000, retryCount: 3, retryDelay: 1_000 }
         )
       });
       let state = await env.DB.prepare(
@@ -65,21 +66,6 @@ export default {
       const configuredStart = Number(env.ARC_START_BLOCK);
       if (!Number.isSafeInteger(configuredStart) || configuredStart < 0)
         throw new Error('ARC_START_BLOCK must be configured');
-      const latest = await client.getBlockNumber();
-      const fromBlock = BigInt((state?.last_block ?? configuredStart - 1) + 1);
-      const toBlock = fromBlock > latest
-        ? latest
-        : fromBlock + 2000n > latest
-          ? latest
-          : fromBlock + 2000n;
-      const memoLogs = fromBlock > latest
-        ? []
-        : await client.getLogs({
-            address: ARC_MEMO_ADDRESS,
-            event: memoEvent,
-            fromBlock,
-            toBlock
-          });
       const chainId = await client.getChainId();
 
       type RequestRow = {
@@ -94,12 +80,25 @@ export default {
       ) => {
         let receipt;
         let transaction;
+        let senderCode;
+        let block;
         try {
-          [receipt, transaction] = await Promise.all([
-            client.getTransactionReceipt({ hash: transactionHash }),
-            client.getTransaction({ hash: transactionHash })
-          ]);
-        } catch {
+          receipt = await client.getTransactionReceipt({
+            hash: transactionHash
+          });
+          transaction = await client.getTransaction({
+            hash: transactionHash
+          });
+          senderCode =
+            (await client.getBytecode({ address: transaction.from })) ?? '0x';
+          block = await client.getBlock({
+            blockNumber: receipt.blockNumber ?? 0n
+          });
+        } catch (error) {
+          console.warn(
+            'Arc transaction verification delayed by the RPC provider',
+            error
+          );
           await env.DB.prepare(
             `UPDATE verification_attempts
              SET state = 'delayed', reason = ?, attempts = attempts + 1,
@@ -118,8 +117,6 @@ export default {
             .run();
           return;
         }
-        const senderCode =
-          (await client.getBytecode({ address: transaction.from })) ?? '0x';
         const result = verifyReceipt(
           receipt,
           {
@@ -155,10 +152,10 @@ export default {
             .run();
           return;
         }
-        const block = await client.getBlock({
-          blockNumber: receipt.blockNumber ?? 0n
-        });
-        const amountMicroUsdc = result.transfer.value / 1_000_000_000_000n;
+        const amountMicroUsdc =
+          result.transfer.decimals === 18
+            ? result.transfer.value / 1_000_000_000_000n
+            : result.transfer.value;
         await env.DB.prepare(
           `INSERT OR IGNORE INTO payments
           (id, request_id, transaction_hash, log_index, payer_address, amount_micro_usdc, block_number, block_timestamp, received_at)
@@ -223,96 +220,58 @@ export default {
         if (request) await retryAttempt(request, attempt.transaction_hash);
       }
 
+      // Recovery attempts must run before the block scan. A provider limit on
+      // eth_getLogs must never prevent a submitted payment from being retried.
+      const latest = await client.getBlockNumber();
+      const fromBlock = BigInt((state?.last_block ?? configuredStart - 1) + 1);
+      const maxBlocksPerScan = 500n;
+      const toBlock =
+        fromBlock > latest
+          ? latest
+          : fromBlock + maxBlocksPerScan - 1n > latest
+            ? latest
+            : fromBlock + maxBlocksPerScan - 1n;
+      let memoLogs: Awaited<ReturnType<typeof client.getLogs>> = [];
+      if (fromBlock <= latest) {
+        try {
+          memoLogs = await client.getLogs({
+            address: ARC_MEMO_ADDRESS,
+            event: memoEvent,
+            fromBlock,
+            toBlock
+          });
+        } catch (error) {
+          console.warn('Arc memo log scan delayed by the RPC provider', error);
+          return;
+        }
+      }
+
       for (const memoLog of memoLogs) {
         const memoId = memoLog.args.memoId;
         const transactionHash = memoLog.transactionHash;
         if (!memoId || !transactionHash) continue;
         const normalizedTransactionHash = transactionHash.toLowerCase();
         const request = await env.DB.prepare(
-          'SELECT id, recipient_address, amount_micro_usdc FROM payment_requests WHERE memo_id = ?'
+          'SELECT id, memo_id, recipient_address, amount_micro_usdc FROM payment_requests WHERE memo_id = ?'
         )
           .bind(memoId)
-          .first<{
-            id: string;
-            recipient_address: string;
-            amount_micro_usdc: string;
-          }>();
+          .first<RequestRow>();
         if (!request) continue;
-        const [receipt, transaction] = await Promise.all([
-          client.getTransactionReceipt({ hash: transactionHash }),
-          client.getTransaction({ hash: transactionHash })
-        ]);
-        const senderCode =
-          (await client.getBytecode({ address: transaction.from })) ?? '0x';
-        const result = verifyReceipt(
-          receipt,
-          {
-            memoId,
-            recipient: getAddress(request.recipient_address),
-            amount: BigInt(request.amount_micro_usdc)
-          },
-          chainId,
-          {
-            hash: transaction.hash,
-            from: transaction.from,
-            fromCode: senderCode,
-            to: transaction.to,
-            input: transaction.input
-          }
-        );
-        if (!result.ok) {
-          await env.DB.prepare(
-            `INSERT INTO verification_attempts(request_id, network, transaction_hash, state, reason, attempts, next_attempt_at, created_at, updated_at)
-            VALUES (?, ?, ?, 'rejected', ?, 1, ?, ?, ?)
-            ON CONFLICT(network, transaction_hash) DO UPDATE SET state = 'rejected', reason = excluded.reason, attempts = verification_attempts.attempts + 1, updated_at = excluded.updated_at`
-          )
-            .bind(
-              request.id,
-              network,
-              transactionHash.toLowerCase(),
-              result.reason,
-              Date.now() + 300_000,
-              new Date().toISOString(),
-              new Date().toISOString()
-            )
-            .run();
-          continue;
-        }
-        const block = await client.getBlock({
-          blockNumber: receipt.blockNumber ?? 0n
-        });
-        const amountMicroUsdc = result.transfer.value / 1_000_000_000_000n;
         await env.DB.prepare(
-          `INSERT OR IGNORE INTO payments
-          (id, request_id, transaction_hash, log_index, payer_address, amount_micro_usdc, block_number, block_timestamp, received_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-          .bind(
-            `${network}:${transactionHash.toLowerCase()}:${result.transfer.logIndex}`,
-            request.id,
-            normalizedTransactionHash,
-            result.transfer.logIndex,
-            result.transfer.from,
-            amountMicroUsdc.toString(),
-            Number(receipt.blockNumber ?? 0n),
-            new Date(Number(block.timestamp) * 1000).toISOString(),
-            new Date().toISOString()
-          )
-          .run();
-        await env.DB.prepare(
-          `INSERT INTO verification_attempts(request_id, network, transaction_hash, state, reason, attempts, next_attempt_at, created_at, updated_at)
-          VALUES (?, ?, ?, 'verified', NULL, 1, ?, ?, ?)
-          ON CONFLICT(network, transaction_hash) DO UPDATE SET state = 'verified', reason = NULL, updated_at = excluded.updated_at`
+          `INSERT OR IGNORE INTO verification_attempts
+          (request_id, network, transaction_hash, state, reason, attempts, next_attempt_at, created_at, updated_at)
+          VALUES (?, ?, ?, 'pending', NULL, 0, ?, ?, ?)`
         )
           .bind(
             request.id,
             network,
-            transactionHash.toLowerCase(),
+            normalizedTransactionHash,
             Date.now(),
             new Date().toISOString(),
             new Date().toISOString()
           )
           .run();
+        await retryAttempt(request, transactionHash);
       }
 
       const refreshed = await env.DB.prepare(

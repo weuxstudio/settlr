@@ -5,7 +5,7 @@
   "compatibility_date": "2026-09-17",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "ARC_RPC_URL": "https://rpc.mainnet.arc.io",
+    "ARC_RPC_URL": "https://rpc.blockdaemon.mainnet.arc.io",
     "ARC_START_BLOCK": "21991464",
     "ARC_NETWORK": "mainnet"
   },

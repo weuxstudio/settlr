@@ -6,7 +6,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "ARC_NETWORK": "mainnet",
-    "ARC_RPC_URL": "https://rpc.mainnet.arc.io",
+    "ARC_RPC_URL": "https://rpc.blockdaemon.mainnet.arc.io",
     "PAYMENTS_ENABLED": "true"
   },
   "assets": {

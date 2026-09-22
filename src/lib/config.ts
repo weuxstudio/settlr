@@ -15,7 +15,7 @@ export const ARC_EXPLORER_URL =
 export const ARC_RPC_URL =
   PUBLIC_ARC_RPC_URL ??
   (ARC_ENVIRONMENT === 'mainnet'
-    ? 'https://rpc.mainnet.arc.io'
+    ? 'https://rpc.blockdaemon.mainnet.arc.io'
     : 'https://rpc.testnet.arc.io');
 export const ARC_USDC_ADDRESS =
   '0x3600000000000000000000000000000000000000' as `0x${string}`;
