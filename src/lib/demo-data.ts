@@ -1,6 +1,18 @@
 // Sample workspace shown by the interface while no wallet is connected.
 //
-// Every payment record below is a real Arc mainnet settlement:
+// What is real and what is not, per record:
+//   The four payment records below are real Arc mainnet settlements. Amounts, times,
+//   payers, log indexes and transaction hashes come from those transactions and were
+//   verified by the same module the running app uses.
+//   The Liquid Solution Studios request exists in the running app and carries its real
+//   public link token, so /pay/<token> resolves there and shows 5.00 of 33.65 USDC as
+//   partially paid. It is the only record with a token.
+//   The other five requests do not exist as requests in the running app. Their tokens
+//   are therefore omitted: there is no payment link to open and the preview must not
+//   pretend otherwise. Their payment records are still the verified settlements below.
+//   Creation times of the requests that predate the app are placeholders.
+//
+// The verified settlements:
 //   block 21995547, 2026 09 21 10:34:28 UTC, 3.50 USDC, full settlement, memo tag memomatch:v1
 //     https://explorer.arc.io/tx/0x783440022c6c7d437ec9ed11ca2f3a81006b89062de15bfd71d2521173d340aa
 //   block 21996007, 2026 09 21 10:38:21 UTC, 2.22 USDC, part payment, memo tag memomatch:v1
@@ -20,7 +32,13 @@ import { deriveStatus } from '$core/index';
 import { formatUsdcBaseUnits, parseUsdc } from '$lib/format';
 import type { DashboardStats, PaymentRequest } from './types';
 
-export const demoRequests: PaymentRequest[] = [
+/**
+ * A request shown in the landing preview. The link token is optional: it only exists
+ * for requests that are stored in the running app and can be opened at /pay/<token>.
+ */
+export type PreviewRequest = Omit<PaymentRequest, 'token'> & { token?: string };
+
+export const demoRequests: PreviewRequest[] = [
   {
     id: 'req_9af72d',
     token: '0x9af72d21d82e0cb6a95aa6430492c33ee09ab000231f36f28e62bbcacf2b8a01',
@@ -51,7 +69,6 @@ export const demoRequests: PaymentRequest[] = [
   },
   {
     id: 'req_7d2f10',
-    token: 'pay_demo_7d2f10',
     memoId:
       '0x931a757b660c147089ce4f69672c7c59039c977ca769d856d5eeb9f7a7da082d',
     title: 'Website Design',
@@ -80,7 +97,6 @@ export const demoRequests: PaymentRequest[] = [
   },
   {
     id: 'req_8f3a1d',
-    token: 'pay_demo_8f3a1d',
     memoId:
       '0x92a292f056a58a6f020d6060c198144e6eac05a7833499ed9a477aea66ebfefd',
     title: 'Website audit, Sept. 2026',
@@ -109,7 +125,6 @@ export const demoRequests: PaymentRequest[] = [
   },
   {
     id: 'req_a27c9e',
-    token: 'pay_demo_a27c9e',
     memoId:
       '0x8e80c34118efa31d678b51bd9b4ff92c40604839dd6187d8d021bd081e58d3d5',
     title: 'Arc integration sprint',
@@ -138,7 +153,6 @@ export const demoRequests: PaymentRequest[] = [
   },
   {
     id: 'req_c51b8e',
-    token: 'pay_demo_c51b8e',
     memoId:
       '0xb8a43139d6cec73ef2da88623044de37022239d9ddade3600c44af22c803a376',
     title: 'Design system review',
@@ -154,7 +168,6 @@ export const demoRequests: PaymentRequest[] = [
   },
   {
     id: 'req_32de44',
-    token: 'pay_demo_32de44',
     memoId:
       '0x7734903b24504dd9fdee6663687dbf3db0372bb6a2b2712a592ff42a71671789',
     title: 'Mainnet workshop deposit',
@@ -174,7 +187,7 @@ export const demoRequests: PaymentRequest[] = [
  * The headline figures are derived from the requests above, so the preview can
  * never show a total that contradicts the payment records it lists.
  */
-function summarize(requests: PaymentRequest[]): DashboardStats {
+function summarize(requests: PreviewRequest[]): DashboardStats {
   let collected = 0n;
   let outstanding = 0n;
   let paidCount = 0;

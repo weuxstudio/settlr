@@ -58,9 +58,10 @@
   }
 
   function previewReference(request: (typeof demoRequests)[number]) {
-    return request.publicReference?.trim()
-      ? request.publicReference
-      : shortenAddress(request.token, 8, 6);
+    if (request.publicReference?.trim()) return request.publicReference;
+    // The memo reference is the real on-chain value. The link token only exists for
+    // requests that are stored in the running app.
+    return shortenAddress(request.token ?? request.memoId, 8, 6);
   }
 
   const previewPayments = demoRequests
@@ -193,13 +194,13 @@
               <div class="table-label"><span>REQUEST</span><span>REQUESTED</span><span>RECEIVED</span><span>STATUS</span><span>DUE</span></div>
               {#each demoRequests as request (request.id)}
                 {@const status = previewStatus(request)}
-                <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>{request.title}</strong><small>Reference {previewReference(request)}</small></span></span><strong>{request.amount} <small>USDC</small></strong><strong>{request.paid} <small>USDC</small></strong><span class={previewStatusClass[status]}>● {status}</span><span class="due">{previewDue(request.dueDate)}</span></div>
+                <div class="table-row"><span class="request-cell"><span class="request-icon"><Link2 size={13} /></span><span><strong>{request.title}</strong><small>Reference {previewReference(request)}</small>{#if request.token}<a class="preview-live" href="/pay/{request.token}" target="_blank" rel="noreferrer">Open live request</a>{/if}</span></span><strong>{request.amount} <small>USDC</small></strong><strong>{request.paid} <small>USDC</small></strong><span class={previewStatusClass[status]}>● {status}</span><span class="due">{previewDue(request.dueDate)}</span></div>
               {/each}
             </div>
             <div class="preview-activity"><div><h3>Settlement activity</h3><p>The latest verified payment events.</p></div><span class="activity-spark">⌁</span>{#each previewPayments as { request, payment } (payment.id)}<div class="activity-row"><span class="match-check"><Check size={12} /></span><span><strong>{request.title}</strong><small>{previewDate(payment.receivedAt)} · {shortenAddress(payment.payer)} · <a href={payment.explorerUrl} target="_blank" rel="noreferrer">Arc transaction ↗</a></small></span><b>+{payment.amount} USDC</b></div>{/each}</div>
           </div>
         </figure>
-        <span class="illustrative-label">Interface preview, values from the four verified Arc mainnet settlements</span>
+        <span class="illustrative-label">Interface preview, values from the four verified Arc mainnet settlements. The Liquid Solution Studios request is live and opens the real payment link.</span>
       </div>
     </section>
 
@@ -930,6 +931,16 @@
     color: #8c98aa;
     font-size: 8px;
     font-weight: 500;
+  }
+  .preview-live {
+    align-self: flex-start;
+    color: #2454d6;
+    font-size: 8px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .preview-live:hover {
+    text-decoration: underline;
   }
   .request-icon {
     display: grid;
